@@ -96,7 +96,8 @@ must-have works in a packaged build.
 - Title, controls, pause and Options cards: three sound levels at 80 plus sound on and off, and
   "© 2026 Leland Rangel. All rights reserved." on the title card
 - A sound for everything, and nothing drones
-- A packaged macOS Shipping build under 1 GB, signed with Developer ID and notarized
+- A packaged Windows Shipping build under 1 GB, made on the PC (a signed, notarized Mac build is a
+  bonus, never ahead of the Windows one)
 
 **Should**
 
@@ -122,7 +123,18 @@ disqualified, so the gap is a buffer, not spare time.
 
 - [x] Install UE5 and Xcode (open Xcode once to accept the licence, then run `xcode-select --install`)
 - [ ] Join the jam on itch.io
-- [ ] Package an empty project as a Shipping build and run the zip on a clean folder
+- [ ] Package an empty project as a Shipping build and run the zip on a clean folder (Mac: underway. The
+      entry moved to Windows, so do it again on the PC)
+- [ ] **Set up the PC** (the entry moved there on Nov 12, see Open questions):
+  - [ ] Install UE 5.8 from the Epic launcher
+  - [ ] Install Visual Studio 2022 with the "Game development with C++" workload (it brings the Windows SDK)
+  - [ ] Install Git for Windows and Git LFS, then `git lfs install`
+  - [ ] Install Claude Code and sign in
+  - [ ] Clone `github.com/lelandcrangel/tribute`, open `Tribute.uproject`, let it build the C++ and
+        compile shaders
+  - [ ] Editor Preferences > Model Context Protocol: turn Auto Start Server on (it's per machine and off
+        by default in 5.8), then start `claude` in the project folder and check `/mcp`
+  - [ ] Package the empty project for Win64 (see Packaging) and run it from a clean folder
 - [x] Claude Code and the Unreal MCP working beside the editor
 - [ ] Dev log entry 1: the cut, and why it's coming back
 
@@ -132,7 +144,8 @@ disqualified, so the gap is a buffer, not spare time.
 - [ ] Cows and people: wander, panic, get lifted
 - [ ] Power, transformers, Heat, the police car
 - [ ] Manifest, clock and HUD
-- [ ] **Package a build tonight** (the jam page's tip for day two), signed and notarized end to end
+- [ ] **Package a build tonight** (the jam page's tip for day two), uploaded to itch and downloaded back
+      end to end
 
 **Saturday, Nov 14: the mothership**
 
@@ -238,22 +251,24 @@ Source: Epic's [Unreal MCP in Unreal Editor](https://dev.epicgames.com/documenta
 (5.9 docs). The 5.8 version of that page lists Auto Start Server as off by default, so check the setting
 rather than assume it.
 
-## Packaging on the Mac
+## Packaging
 
-The entry is a macOS build, signed with Leland's Developer ID and notarized, so a judge's Mac opens it with no
-warning. The full commands are in `CLAUDE.md` under Packaging.
+The entry is a **Windows 10/11 build**, packaged on the PC. The full commands are in `CLAUDE.md` under
+Packaging.
 
-1. Package a Shipping build with `RunUAT.sh BuildCookRun -platform=Mac -clientconfig=Shipping`.
-2. Sign `Tribute.app` with `codesign --options runtime --timestamp` and the Developer ID Application certificate.
-3. Notarize with `xcrun notarytool submit --wait`, then `xcrun stapler staple`. Leland sets the `notary`
-   keychain profile up once himself; credentials never go in the repo.
-4. Check that `spctl -a -vv -t exec Tribute.app` says `accepted` and `source=Notarized Developer ID`.
-5. Zip it with `ditto -c -k --keepParent` as `TeamName_GameName.zip`, upload it, then download it back and
-   open it once.
+1. Package a Shipping build with `RunUAT.bat BuildCookRun -platform=Win64 -clientconfig=Shipping -prereqs`,
+   archived outside the project folder.
+2. Copy the `Windows` folder somewhere clean and run `Tribute.exe` to the title card.
+3. Zip the contents of `Windows` as `TeamName_GameName.zip`, under 1 GB.
+4. Upload it, then download it back and run it once. It isn't code-signed, so SmartScreen asks first
+   (More info, then Run anyway). The itch page says so.
 
-Run all of this on Friday night's build. Notarization can take over an hour, and Sunday should be the second
-run, not the first. If the signed app crashes but the unsigned one runs, the hardened runtime is blocking
-something. Add the `com.apple.security.cs.disable-library-validation` entitlement only then.
+Run all of this on Friday night's build, so Sunday is the second run, not the first.
+
+**The Mac bonus build.** Only after the Windows entry is uploaded: on the Mac, close the editor (16 GB is
+tight while it cooks), package with `-platform=Mac`, sign with the Developer ID, notarize, staple, and add it
+to the itch page as `TeamName_GameName_Mac.zip`. Leland sets the `notary` keychain profile up once himself;
+credentials never go in the repo.
 
 ## Art and audio
 
@@ -308,7 +323,7 @@ forbids other people's IP. Our tones, ship and name must be our own.
       new ones or declare them
 - [ ] **Custom gameplay:** start from a blank project. Every system above is ours, not a template's
 - [ ] **Packaging:** a Shipping build, never the project; zipped as `TeamName_GameName`, under 1 GB, for
-      macOS, signed and notarized so it opens with no Gatekeeper warning
+      Windows 10/11 (the jam also accepts macOS, Android, iOS and an experimental web build)
 - [ ] Upload to our own itch.io page, then submit it to the jam
 - [ ] 18 or older, with an Epic account; the account email goes on the form
 
@@ -343,8 +358,13 @@ Unreal MCP, plus any of Meshy, Tripo or Rodin used.
 
 ## Open questions
 
-- [ ] **Decided: Mac (Apple Silicon).** The entry is a macOS build, signed with Leland's Developer ID and
-      notarized. Unreal can't package Windows from a Mac.
+- [x] **Decided (Nov 12): Windows, built on the PC.** The jam accepts Windows or macOS, but its page doesn't say
+      what the judges play on, so Windows reaches the most of them. The PC's 64 GB also ends the memory pressure
+      the 16 GB Mac hit while cooking an empty project, and a PC with an NVIDIA RTX card can reach the Render
+      Royalty NVIDIA RTX Award. A signed, notarized Mac build stays as an optional bonus.
+- [ ] **DLSS for the RTX award?** The Render Royalty NVIDIA RTX Award needs an NvRTX feature, DLSS 4.5 or
+      NVIDIA ACE. Which graphics card is in the PC? If it's an RTX card, the DLSS plugin is a small Saturday
+      item.
 - [ ] **The name.** Keep "Tribute", or something else? Also choose a team name for the zip.
 - [ ] **C++ or Blueprints?** How comfortable is Leland in each? It changes how the agents work.
 - [ ] **Synty.** Do the packs' licences cover Unreal, and are the Unreal versions owned? If not, it's Fab and

@@ -113,19 +113,59 @@ Content lives under `Content/Tribute/` (`Maps`, `Saucer`, `Targets`, `Mothership
 
 ## Packaging
 
-We build on an Apple Silicon Mac, so the entry is a **macOS build, signed with Leland's Developer ID
-and notarized**, which lets a judge's Mac open it with no Gatekeeper warning. Unreal can't package
-Windows from a Mac.
+The game is built on Leland's Windows PC (64 GB), so the entry is a **Windows 10/11 build**. The jam
+also accepts macOS, but its page doesn't say what the judges play on, and Windows reaches the most of
+them. A Mac build is an optional bonus download, made on the Mac (below), and only once the Windows
+entry is safe.
 
-1. **Package** in the Shipping configuration, never the project folder. With a launcher install:
+### The Windows entry
+
+1. **Package** in the Shipping configuration, archived outside the repo (say
+   `..\TributeBuilds\<date>`), never in the project folder. With a launcher install:
 
    ```
-   "/Users/Shared/Epic Games/UE_5.8/Engine/Build/BatchFiles/RunUAT.sh" BuildCookRun \
-     -project="<path>/Tribute.uproject" -platform=Mac -clientconfig=Shipping \
-     -build -cook -stage -pak -archive -archivedirectory="<out>"
+   "C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun ^
+     -project="<path>\Tribute.uproject" -platform=Win64 -clientconfig=Shipping ^
+     -build -cook -stage -pak -archive -prereqs -nodebuginfo ^
+     -archivedirectory="<out>" -unattended -utf8output
    ```
 
-   Change `UE_5.8` to the installed version.
+   That's `cmd` syntax. Claude Code's shell on Windows is Git Bash, where the same command takes
+   forward slashes and `\` line breaks. Change `UE_5.8` to the installed version. `-prereqs` puts the runtime installer in the build, so
+   a judge's PC that lacks the Visual C++ runtime can still run it. It takes a while; run it in the
+   background and log to a file. If it fails, read the log's "Warning/Error Summary": one error fails
+   the build even when the cook says `Done!`.
+2. **Check it:** copy `<out>\Windows\` to a clean folder away from the project and run `Tribute.exe`.
+   It must reach the title card and play.
+3. **Zip for itch** as `TeamName_GameName.zip`, **under 1 GB**, with the contents of `Windows\` at
+   the top of the zip:
+
+   ```
+   Compress-Archive -Path "<out>\Windows\*" -DestinationPath TeamName_GameName.zip
+   ```
+
+4. **Download it back from itch** and run it once from the download, so it goes through what a judge's
+   copy will. It isn't code-signed, so Windows shows "Windows protected your PC". Click More info, then
+   Run anyway. Say that on the itch page.
+5. Upload to our own itch.io page, then submit it to the jam.
+
+Do the whole run, the download-back included, on **Friday night's** build, so Sunday's is the second
+time rather than the first.
+
+### The Mac bonus build (optional)
+
+Only after the Windows entry is uploaded. On the Mac (an Apple Silicon Mac with 16 GB; close the
+editor while it cooks), pull the repo and:
+
+1. **Package.** The engine on the Mac is at `~/Games/UE_5.8` (not the launcher's usual
+   `/Users/Shared/Epic Games`). Archive outside the repo, under `../TributeBuilds/<date>`:
+
+   ```
+   "$HOME/Games/UE_5.8/Engine/Build/BatchFiles/RunUAT.sh" BuildCookRun \
+     -project="$PWD/Tribute.uproject" -platform=Mac -clientconfig=Shipping \
+     -build -cook -stage -pak -archive -archivedirectory="<out>" -unattended -utf8output
+   ```
+
 2. **Sign** the app with the hardened runtime:
 
    ```
@@ -151,12 +191,8 @@ Windows from a Mac.
    with `xcrun notarytool log <submission-id> --keychain-profile "notary"`.
 4. **Check it:** `spctl -a -vv -t exec Tribute.app` must say `accepted` and
    `source=Notarized Developer ID`. Anything else is not done.
-5. **Zip for itch** with `ditto -c -k --keepParent Tribute.app TeamName_GameName.zip`, **under 1 GB**.
-   Download it back from itch and open it once, so it carries the quarantine flag a judge's copy will.
-6. Upload to our own itch.io page, then submit it to the jam.
-
-Do the whole run, signing and notarizing included, on **Friday night's** build, so Sunday's is the
-second time rather than the first.
+5. **Zip** with `ditto -c -k --keepParent Tribute.app TeamName_GameName_Mac.zip`, under 1 GB, and add
+   it to the itch page as a second download.
 
 ## The dev log
 
@@ -168,7 +204,7 @@ because Sunday has no time for it.
 
 (Add each one as it happens: what broke, how it showed up, and the fix.)
 
-- **A fresh Xcode can't compile Unreal's shaders.** Recent Xcode ships without the Metal shader
+- **On the Mac, a fresh Xcode can't compile Unreal's shaders.** Recent Xcode ships without the Metal shader
   compiler, so the editor failed on first launch with `Xcode Metal Compiler error: cannot execute tool
   'metal' due to missing Metal Toolchain`. Fix: `xcodebuild -downloadComponent MetalToolchain` (about
   700 MB), check with `xcrun metal --version`, then relaunch. If the error survives the install, delete
@@ -178,3 +214,22 @@ because Sunday has no time for it.
   `ModelContextProtocol.GenerateClientConfig ClaudeCode` wrote `.mcp.json` instead. Claude Code here runs
   in the desktop app, so `claude mcp list` isn't available in Terminal; `lsof` on port 8000 plus a test
   prompt ("spawn a cube at the origin") is how to tell whether it's connected.
+- **5.8's MCP server doesn't start on its own.** Auto Start Server is off by default in 5.8, so a
+  fresh editor has no server and `claude` finds nothing. On Nov 12 it only ran because it was started
+  by hand (`ModelContextProtocol.StartServer` in the console). Fix: Edit > Editor Preferences >
+  Model Context Protocol > Auto Start Server on. It's a per-user setting under `Saved/`, so it isn't in
+  git and a new machine needs it again. Agents are blocked from changing the MCP server's own settings,
+  so Leland flips it.
+- **The first package failed its cook because of the MCP toolsets.** UAT stopped with
+  `ExitCode=25 (Error_UnknownCookFailure)` even though the cook log says `Done!`. The cause was two
+  errors: `Asset manager settings do not include a rule for assets of type GameFeatureData`. The
+  toolsets that AllToolsets turns on are Game Feature plugins, and a Blank project has no rule for
+  them. Fix: the `GameFeatureData` entry under `[/Script/Engine.AssetManagerSettings]` in
+  `Config/DefaultGame.ini`. Look for real errors in the log's "Warning/Error Summary"; one error is
+  enough to fail the build.
+- **There's no MCP "Instructions" setting in 5.8.** The design doc's step comes from the 5.9 docs.
+  Claude Code reads this `CLAUDE.md` from the project folder anyway.
+- **A viewport capture is too big to read inline.** `CaptureViewport` returns the PNG as base64 (about
+  2.6 MB), which overflows the tool result and gets saved to a file instead. Decode it with Python
+  (`json` then `base64`), shrink it with `sips -Z 1024`, and look at that. It also refuses to run
+  without an `annotations` argument; pass one with `gridSpacing: 0` for a plain shot.
