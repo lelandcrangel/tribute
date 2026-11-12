@@ -187,35 +187,32 @@ connects to. It is **experimental** and arrived in UE 5.8, so install 5.8 or new
 
 **1. The project and Claude Code**
 
-- [ ] Install Claude Code on the same machine as the editor, and sign in
+- [x] Install Claude Code on the same machine as the editor, and sign in
 - [ ] Create a Blank project, then `git init` (this folder's `.gitignore` and `.gitattributes` cover the
       ignores and Git LFS)
-- [ ] Commit the empty project before any agent touches it
+- [x] Commit the empty project before any agent touches it
 
-**2. Turn it on in the editor**
+**2. Turn it on in the editor** (what worked on our 5.8 install, Nov 12)
 
-- [ ] **Edit > Plugins:** check that "Unreal MCP" is enabled (it is by default), and enable "All Toolsets".
-      "Terminal" is optional. Restart when asked
-- [ ] **Edit > Editor Preferences > Agentic Workflows > Model Context Protocol:** check Auto Start Server is
-      on, port 8000, path `/mcp`
-- [ ] Under **MCP Client**, set Client Selection to Claude Code and click **Generate Client Config**. A
-      launcher install writes `.mcp.json` to the project root. The console command
-      `ModelContextProtocol.GenerateClientConfig ClaudeCode` does the same
-- [ ] In the **Output Log**, look for `LogModelContextProtocol` reporting the address and port it bound to
+- [x] **Edit > Plugins:** "Unreal MCP" (`ModelContextProtocol`) is on by default; enable "All Toolsets"
+      (`AllToolsets`) and restart. Both are now in `Tribute.uproject`
+- [x] **There is no Agentic Workflows settings panel in 5.8.** Epic's page describes 5.9. Use the editor's
+      **Cmd** box instead: `ModelContextProtocol.GenerateClientConfig ClaudeCode` wrote `.mcp.json` to the
+      project root, and `ModelContextProtocol.StartServer` starts the server if it isn't running
+- [x] Check the server from Terminal: `lsof -nP -iTCP:8000 -sTCP:LISTEN` shows `UnrealEditor` listening
+      on `127.0.0.1:8000`
 
 **3. Connect Claude Code**
 
-- [ ] With the editor open, open a terminal in the project folder and run `claude`. Approve the `unreal-mcp`
-      server from `.mcp.json` when asked
-- [ ] Type `/mcp` and check that `unreal-mcp` shows as connected. If there's no `.mcp.json`, add it by hand:
-      `claude mcp add --transport http unreal-mcp http://127.0.0.1:8000/mcp`
-- [ ] Ask "What toolsets are available, and what can you do with them?", then "Spawn a cube at the origin"
-      and watch it appear
+- [x] Claude Code runs in the **desktop app** here; the `claude` command isn't installed in Terminal, and
+      isn't needed. Start a **new** session on the `Tribute` folder after `.mcp.json` changes, and approve
+      `unreal-mcp`
+- [x] "Spawn a cube at the origin": the cube appeared. Connected
 
 **4. Make it yours**
 
-- [ ] In **Project Settings > Agentic Workflows > Model Context Protocol > Instructions**, add a line pointing
-      at `CLAUDE.md`
+- [ ] After the next editor restart, check whether the server came up by itself (the `lsof` line). If not,
+      run `ModelContextProtocol.StartServer` after each launch
 - [ ] Commit, then package the empty project (the Schedule's Thursday item)
 
 **Things that will bite**

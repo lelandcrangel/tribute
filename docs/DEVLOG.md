@@ -12,6 +12,10 @@ Each day becomes one itch.io post with screenshots.
   Metal Toolchain`, because recent Xcode no longer ships the Metal shader compiler. One command fixed it
   (`xcodebuild -downloadComponent MetalToolchain`), then a long first shader compile. Nothing in the
   launcher says this; the error only names the fix once you get to it.
+- Second wall: Epic's MCP docs describe 5.9, and our 5.8 editor has no Agentic Workflows settings panel.
+  The console command `ModelContextProtocol.GenerateClientConfig ClaudeCode` wrote the client config,
+  a new Claude Code session picked it up, and the first thing an agent did in the editor was spawn a cube
+  at the origin. The agents can reach the editor now.
 
 ## Day 2, Friday Nov 13: the raid in grey boxes
 

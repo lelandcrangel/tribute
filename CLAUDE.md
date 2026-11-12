@@ -87,6 +87,10 @@ Content lives under `Content/Tribute/` (`Maps`, `Saucer`, `Targets`, `Mothership
 
 - **The editor has to be open before `claude`.** The MCP server (`http://127.0.0.1:8000/mcp`) lives
   inside it.
+- **Checking the server:** `lsof -nP -iTCP:8000 -sTCP:LISTEN` should show `UnrealEditor`. If it shows
+  nothing, run `ModelContextProtocol.StartServer` in the editor's Cmd box. Our 5.8 install has no
+  Agentic Workflows settings panel, so the console commands are the controls.
+- **A new session after `.mcp.json` changes.** Claude Code loads its MCP servers when a session starts.
 - **Only one session drives the editor at a time.** Tool calls run one at a time on the game
   thread. Other sessions can write C++ on their own branches, without the MCP.
 - **Keep each request small.** Claude Code times out a tool call after about 120 seconds.
@@ -169,3 +173,8 @@ because Sunday has no time for it.
   'metal' due to missing Metal Toolchain`. Fix: `xcodebuild -downloadComponent MetalToolchain` (about
   700 MB), check with `xcrun metal --version`, then relaunch. If the error survives the install, delete
   the project's `DerivedDataCache/` and relaunch. Any new Mac or Xcode update needs it checked again.
+- **Epic's MCP docs describe 5.9, and 5.8 differs.** There was no Edit > Editor Preferences > Agentic
+  Workflows panel, so Generate Client Config wasn't a button. The console command
+  `ModelContextProtocol.GenerateClientConfig ClaudeCode` wrote `.mcp.json` instead. Claude Code here runs
+  in the desktop app, so `claude mcp list` isn't available in Terminal; `lsof` on port 8000 plus a test
+  prompt ("spawn a cube at the origin") is how to tell whether it's connected.
