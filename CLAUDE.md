@@ -109,11 +109,50 @@ Content lives under `Content/Tribute/` (`Maps`, `Saucer`, `Targets`, `Mothership
 
 ## Packaging
 
-- **Shipping configuration**, never the project folder. Windows:
-  `Engine\Build\BatchFiles\RunUAT.bat BuildCookRun -project="<path>\Tribute.uproject" -platform=Win64 -clientconfig=Shipping -build -cook -stage -pak -archive -archivedirectory="<out>"`
-  On Mac, use `RunUAT.sh` and `-platform=Mac`.
-- Zip as `TeamName_GameName.zip`, **under 1 GB**. Run it from a clean folder before uploading.
-- Upload to our own itch.io page, then submit it to the jam.
+We build on an Apple Silicon Mac, so the entry is a **macOS build, signed with Leland's Developer ID
+and notarized**, which lets a judge's Mac open it with no Gatekeeper warning. Unreal can't package
+Windows from a Mac.
+
+1. **Package** in the Shipping configuration, never the project folder. With a launcher install:
+
+   ```
+   "/Users/Shared/Epic Games/UE_5.8/Engine/Build/BatchFiles/RunUAT.sh" BuildCookRun \
+     -project="<path>/Tribute.uproject" -platform=Mac -clientconfig=Shipping \
+     -build -cook -stage -pak -archive -archivedirectory="<out>"
+   ```
+
+   Change `UE_5.8` to the installed version.
+2. **Sign** the app with the hardened runtime:
+
+   ```
+   codesign --force --deep --options runtime --timestamp \
+     --sign "Developer ID Application: <Name> (<TEAMID>)" Tribute.app
+   ```
+
+   If the signed app crashes on launch and the unsigned one doesn't, the hardened runtime is blocking
+   something. Add an entitlements file with `com.apple.security.cs.disable-library-validation` and pass
+   it with `--entitlements`. Add entitlements only when a crash calls for them.
+3. **Notarize and staple.** The `notary` keychain profile is set up once with
+   `xcrun notarytool store-credentials "notary" --apple-id <Apple ID> --team-id <TEAMID>`, using an
+   app-specific password. Leland does that step himself; never put credentials in this repo or a
+   command line.
+
+   ```
+   ditto -c -k --keepParent Tribute.app Tribute-notarize.zip
+   xcrun notarytool submit Tribute-notarize.zip --keychain-profile "notary" --wait
+   xcrun stapler staple Tribute.app
+   ```
+
+   Notarization usually takes minutes but can take over an hour. If it's rejected, read the reason
+   with `xcrun notarytool log <submission-id> --keychain-profile "notary"`.
+4. **Check it:** `spctl -a -vv -t exec Tribute.app` must say `accepted` and
+   `source=Notarized Developer ID`. Anything else is not done.
+5. **Zip for itch** with `ditto -c -k --keepParent Tribute.app TeamName_GameName.zip`, **under 1 GB**.
+   Download it back from itch and open it once, so it carries the quarantine flag a judge's copy will.
+6. Upload to our own itch.io page, then submit it to the jam.
+
+Do the whole run, signing and notarizing included, on **Friday night's** build, so Sunday's is the
+second time rather than the first.
 
 ## The dev log
 

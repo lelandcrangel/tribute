@@ -96,7 +96,7 @@ must-have works in a packaged build.
 - Title, controls, pause and Options cards: three sound levels at 80 plus sound on and off, and
   "© 2026 Leland Rangel. All rights reserved." on the title card
 - A sound for everything, and nothing drones
-- A packaged Windows or macOS Shipping build under 1 GB
+- A packaged macOS Shipping build under 1 GB, signed with Developer ID and notarized
 
 **Should**
 
@@ -120,7 +120,7 @@ disqualified, so the gap is a buffer, not spare time.
 
 **Thursday, Nov 12 (tonight): tools**
 
-- [ ] Install UE5, plus Visual Studio 2022 (on Windows) or Xcode (on Mac)
+- [ ] Install UE5 and Xcode (open Xcode once to accept the licence, then run `xcode-select --install`)
 - [ ] Join the jam on itch.io
 - [ ] Package an empty project as a Shipping build and run the zip on a clean folder
 - [ ] Claude Code and the Unreal MCP working beside the editor
@@ -132,7 +132,7 @@ disqualified, so the gap is a buffer, not spare time.
 - [ ] Cows and people: wander, panic, get lifted
 - [ ] Power, transformers, Heat, the police car
 - [ ] Manifest, clock and HUD
-- [ ] **Package a build tonight** (the jam page's tip for day two)
+- [ ] **Package a build tonight** (the jam page's tip for day two), signed and notarized end to end
 
 **Saturday, Nov 14: the mothership**
 
@@ -235,6 +235,23 @@ Source: Epic's [Unreal MCP in Unreal Editor](https://dev.epicgames.com/documenta
 (5.9 docs). The 5.8 version of that page lists Auto Start Server as off by default, so check the setting
 rather than assume it.
 
+## Packaging on the Mac
+
+The entry is a macOS build, signed with Leland's Developer ID and notarized, so a judge's Mac opens it with no
+warning. The full commands are in `CLAUDE.md` under Packaging.
+
+1. Package a Shipping build with `RunUAT.sh BuildCookRun -platform=Mac -clientconfig=Shipping`.
+2. Sign `Tribute.app` with `codesign --options runtime --timestamp` and the Developer ID Application certificate.
+3. Notarize with `xcrun notarytool submit --wait`, then `xcrun stapler staple`. Leland sets the `notary`
+   keychain profile up once himself; credentials never go in the repo.
+4. Check that `spctl -a -vv -t exec Tribute.app` says `accepted` and `source=Notarized Developer ID`.
+5. Zip it with `ditto -c -k --keepParent` as `TeamName_GameName.zip`, upload it, then download it back and
+   open it once.
+
+Run all of this on Friday night's build. Notarization can take over an hour, and Sunday should be the second
+run, not the first. If the signed app crashes but the unsigned one runs, the hardened runtime is blocking
+something. Add the `com.apple.security.cs.disable-library-validation` entitlement only then.
+
 ## Art and audio
 
 The valley is dark and small, so the mothership has something to be enormous against.
@@ -287,8 +304,8 @@ forbids other people's IP. Our tones, ship and name must be our own.
       tools listed in "Tools you used". The Meshy prompts in Extraction Point's docs predate the jam, so write
       new ones or declare them
 - [ ] **Custom gameplay:** start from a blank project. Every system above is ours, not a template's
-- [ ] **Packaging:** a Shipping build, never the project; zipped as `TeamName_GameName`, under 1 GB, on
-      Windows 10/11 or macOS
+- [ ] **Packaging:** a Shipping build, never the project; zipped as `TeamName_GameName`, under 1 GB, for
+      macOS, signed and notarized so it opens with no Gatekeeper warning
 - [ ] Upload to our own itch.io page, then submit it to the jam
 - [ ] 18 or older, with an Epic account; the account email goes on the form
 
@@ -323,7 +340,8 @@ Unreal MCP, plus any of Meshy, Tripo or Rodin used.
 
 ## Open questions
 
-- [ ] **Windows or Mac?** This sets the toolchain and the build target. Windows is the safer target for judges.
+- [ ] **Decided: Mac (Apple Silicon).** The entry is a macOS build, signed with Leland's Developer ID and
+      notarized. Unreal can't package Windows from a Mac.
 - [ ] **The name.** Keep "Tribute", or something else? Also choose a team name for the zip.
 - [ ] **C++ or Blueprints?** How comfortable is Leland in each? It changes how the agents work.
 - [ ] **Synty.** Do the packs' licences cover Unreal, and are the Unreal versions owned? If not, it's Fab and
