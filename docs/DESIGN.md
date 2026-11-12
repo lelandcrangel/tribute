@@ -120,10 +120,10 @@ disqualified, so the gap is a buffer, not spare time.
 
 **Thursday, Nov 12 (tonight): tools**
 
-- [ ] Install UE5 and Xcode (open Xcode once to accept the licence, then run `xcode-select --install`)
+- [x] Install UE5 and Xcode (open Xcode once to accept the licence, then run `xcode-select --install`)
 - [ ] Join the jam on itch.io
 - [ ] Package an empty project as a Shipping build and run the zip on a clean folder
-- [ ] Claude Code and the Unreal MCP working beside the editor
+- [x] Claude Code and the Unreal MCP working beside the editor
 - [ ] Dev log entry 1: the cut, and why it's coming back
 
 **Friday, Nov 13: the raid in grey boxes**
@@ -188,7 +188,7 @@ connects to. It is **experimental** and arrived in UE 5.8, so install 5.8 or new
 **1. The project and Claude Code**
 
 - [x] Install Claude Code on the same machine as the editor, and sign in
-- [ ] Create a Blank project, then `git init` (this folder's `.gitignore` and `.gitattributes` cover the
+- [x] Create a Blank project, then `git init` (this folder's `.gitignore` and `.gitattributes` cover the
       ignores and Git LFS)
 - [x] Commit the empty project before any agent touches it
 
@@ -199,20 +199,26 @@ connects to. It is **experimental** and arrived in UE 5.8, so install 5.8 or new
 - [x] **There is no Agentic Workflows settings panel in 5.8.** Epic's page describes 5.9. Use the editor's
       **Cmd** box instead: `ModelContextProtocol.GenerateClientConfig ClaudeCode` wrote `.mcp.json` to the
       project root, and `ModelContextProtocol.StartServer` starts the server if it isn't running
+- [ ] **Turn on Auto Start Server** in Edit > Editor Preferences > Model Context Protocol. 5.8's MCP settings
+      hold only the port (8000), path (`/mcp`), Auto Start Server and tool search. Auto Start Server is off by
+      default, so on Nov 12 the server ran only because it was started by hand. It's a per-user setting under
+      `Saved/`, not in git, so every machine needs it; agents are blocked from changing it, so Leland does
 - [x] Check the server from Terminal: `lsof -nP -iTCP:8000 -sTCP:LISTEN` shows `UnrealEditor` listening
-      on `127.0.0.1:8000`
+      on `127.0.0.1:8000`. After a restart, the same line shows whether Auto Start Server worked
 
 **3. Connect Claude Code**
 
 - [x] Claude Code runs in the **desktop app** here; the `claude` command isn't installed in Terminal, and
       isn't needed. Start a **new** session on the `Tribute` folder after `.mcp.json` changes, and approve
       `unreal-mcp`
-- [x] "Spawn a cube at the origin": the cube appeared. Connected
+- [x] "Spawn a cube at the origin": the cube appeared, a viewport capture showed it, and it was deleted.
+      About 50 toolsets are listed. Connected
 
 **4. Make it yours**
 
-- [ ] After the next editor restart, check whether the server came up by itself (the `lsof` line). If not,
-      run `ModelContextProtocol.StartServer` after each launch
+- [x] ~~In **Project Settings > Agentic Workflows > Model Context Protocol > Instructions**, add a line pointing
+      at `CLAUDE.md`~~ *Not in 5.8. The Instructions field is from the 5.9 docs. Claude Code reads `CLAUDE.md`
+      from the project folder on its own, so nothing is lost.*
 - [ ] Commit, then package the empty project (the Schedule's Thursday item)
 
 **Things that will bite**
