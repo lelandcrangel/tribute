@@ -163,3 +163,9 @@ because Sunday has no time for it.
 ## Things that bit, and why the code looks the way it does
 
 (Add each one as it happens: what broke, how it showed up, and the fix.)
+
+- **A fresh Xcode can't compile Unreal's shaders.** Recent Xcode ships without the Metal shader
+  compiler, so the editor failed on first launch with `Xcode Metal Compiler error: cannot execute tool
+  'metal' due to missing Metal Toolchain`. Fix: `xcodebuild -downloadComponent MetalToolchain` (about
+  700 MB), check with `xcrun metal --version`, then relaunch. If the error survives the install, delete
+  the project's `DerivedDataCache/` and relaunch. Any new Mac or Xcode update needs it checked again.

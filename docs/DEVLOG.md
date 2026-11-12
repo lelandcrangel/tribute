@@ -8,6 +8,10 @@ Each day becomes one itch.io post with screenshots.
 - The mothership, its tribute and its light rig were cut from Extraction Point on 2026-08-21. This is the
   version it was meant to be. (The old sequence borrowed a famous melody; this one is our own.)
 - Setup: UE version, Unreal MCP, Claude Code, the first empty Shipping build.
+- First wall: Unreal wouldn't launch. The editor stopped on `cannot execute tool 'metal' due to missing
+  Metal Toolchain`, because recent Xcode no longer ships the Metal shader compiler. One command fixed it
+  (`xcodebuild -downloadComponent MetalToolchain`), then a long first shader compile. Nothing in the
+  launcher says this; the error only names the fix once you get to it.
 
 ## Day 2, Friday Nov 13: the raid in grey boxes
 
