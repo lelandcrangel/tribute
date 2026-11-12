@@ -1,0 +1,24 @@
+# Unreal build output and caches (regenerated on every machine)
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+*/Binaries/
+*/Intermediate/
+
+# IDE files
+.vs/
+.vscode/
+.idea/
+*.sln
+*.suo
+*.xcodeproj/
+*.xcworkspace/
+
+# Packaged builds and zips stay out of git
+Packaged/
+*.zip
+
+# OS clutter
+.DS_Store
+Thumbs.db
