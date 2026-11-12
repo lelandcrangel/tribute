@@ -123,8 +123,9 @@ disqualified, so the gap is a buffer, not spare time.
 
 - [x] Install UE5 and Xcode (open Xcode once to accept the licence, then run `xcode-select --install`)
 - [ ] Join the jam on itch.io
-- [ ] Package an empty project as a Shipping build and run the zip on a clean folder (Mac: underway. The
-      entry moved to Windows, so do it again on the PC)
+- [ ] Package an empty project as a Shipping build and run the zip on a clean folder (Mac: done Nov 12;
+      the staged app runs from a clean folder, and the zip is 611 MB. The entry moved to Windows, so do
+      it again on the PC)
 - [ ] **Set up the PC** (the entry moved there on Nov 12, see Open questions):
   - [ ] Install UE 5.8 from the Epic launcher
   - [ ] Install Visual Studio 2022 with the "Game development with C++" workload (it brings the Windows SDK)

@@ -166,6 +166,10 @@ editor while it cooks), pull the repo and:
      -build -cook -stage -pak -archive -archivedirectory="<out>" -unattended -utf8output
    ```
 
+   **Ship the staged app, not the archived one.** On 5.8 the archive step copies the bare
+   `Binaries/Mac/Tribute-Mac-Shipping.app` (no content, no dylibs), which crashes at launch. The real
+   app is `Saved/StagedBuilds/Mac/Tribute-Mac-Shipping.app`; sign, zip and test that one.
+
 2. **Sign** the app with the hardened runtime:
 
    ```
@@ -227,6 +231,15 @@ because Sunday has no time for it.
   them. Fix: the `GameFeatureData` entry under `[/Script/Engine.AssetManagerSettings]` in
   `Config/DefaultGame.ini`. Look for real errors in the log's "Warning/Error Summary"; one error is
   enough to fail the build.
+- **The archived Mac app crashed at launch.** After a successful BuildCookRun, the app in the archive
+  folder died at once with `Library not loaded: @rpath/libtbb.12.dylib`. The archive step copied
+  `Binaries/Mac/...app` (272 MB, executable only) instead of the staged app (958 MB, with `Contents/UE`
+  holding the paks and dylibs). Its rpaths also point back into the engine install by relative path,
+  so a test next to the project can mislead; always test from a clean folder. Fix: zip
+  `Saved/StagedBuilds/Mac/Tribute-Mac-Shipping.app` instead. That one ran from a clean folder.
+- **An empty project already zips to 611 MB on the Mac.** About 505 MB is the pak, mostly shaders (ray
+  tracing and Substrate are on), plus a 272 MB executable. The jam limit is 1 GB, so check the size of
+  every package, and turn off ray tracing or Substrate if they aren't earning their space.
 - **There's no MCP "Instructions" setting in 5.8.** The design doc's step comes from the 5.9 docs.
   Claude Code reads this `CLAUDE.md` from the project folder anyway.
 - **A viewport capture is too big to read inline.** `CaptureViewport` returns the PNG as base64 (about
