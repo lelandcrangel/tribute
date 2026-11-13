@@ -8,6 +8,9 @@ public class Tribute : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
+		// The classes sit at the module's top level; this lets files in subfolders (Tests/) include them.
+		PrivateIncludePaths.Add(ModuleDirectory);
+
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core",

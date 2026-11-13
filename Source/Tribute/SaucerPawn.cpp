@@ -5,19 +5,26 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/SpotLightComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/OverlapResult.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "EngineUtils.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "PowerHeatComponent.h"
+#include "TargetCharacter.h"
+#include "Transformer.h"
 #include "UObject/ConstructorHelpers.h"
 
 ASaucerPawn::ASaucerPawn()
@@ -70,6 +77,34 @@ ASaucerPawn::ASaucerPawn()
 	Camera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	Camera->SetFieldOfView(60.f);
 
+	// The Heat band: a thin, slightly wider disc through the hull's middle, so its edge shows all round.
+	Rim = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Rim"));
+	Rim->SetupAttachment(Hull);
+	Rim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (DiscMesh.Succeeded())
+	{
+		Rim->SetStaticMesh(DiscMesh.Object);
+	}
+	// In the hull's scaled space: 5.3 m across and 12 cm thick in the world.
+	Rim->SetRelativeScale3D(FVector(5.3f / 5.f, 5.3f / 5.f, 0.24f));
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> TintableMaterial(
+		TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+	if (TintableMaterial.Succeeded())
+	{
+		RimMaterial = TintableMaterial.Object;
+	}
+
+	RimGlow = CreateDefaultSubobject<UPointLightComponent>(TEXT("RimGlow"));
+	RimGlow->SetupAttachment(Collision);
+	RimGlow->SetMobility(EComponentMobility::Movable);
+	RimGlow->SetRelativeLocation(FVector(0.f, 0.f, -60.f));
+	RimGlow->SetIntensityUnits(ELightUnits::Candelas);
+	RimGlow->SetIntensity(2000.f);
+	RimGlow->SetAttenuationRadius(1800.f);
+	RimGlow->SetCastShadows(false);
+
+	PowerHeat = CreateDefaultSubobject<UPowerHeatComponent>(TEXT("PowerHeat"));
+
 	Movement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("Movement"));
 	Movement->MaxSpeed = 1500.f;
 	Movement->Acceleration = 3000.f;
@@ -80,6 +115,18 @@ void ASaucerPawn::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 	FitBeamLight();
+}
+
+void ASaucerPawn::BeginPlay()
+{
+	Super::BeginPlay();
+
+	for (TActorIterator<ATransformer> It(GetWorld()); It; ++It)
+	{
+		Transformers.Add(*It);
+	}
+	PowerHeat->OnPowerEmpty.AddDynamic(this, &ASaucerPawn::HandlePowerEmpty);
+	UpdateRim();
 }
 
 void ASaucerPawn::FitBeamLight()
@@ -170,6 +217,10 @@ void ASaucerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void ASaucerPawn::Move(const FInputActionValue& Value)
 {
+	if (bDown)
+	{
+		return;
+	}
 	const FVector2D Direction = Value.Get<FVector2D>();
 	AddMovementInput(FVector::ForwardVector, Direction.Y);
 	AddMovementInput(FVector::RightVector, Direction.X);
@@ -177,6 +228,10 @@ void ASaucerPawn::Move(const FInputActionValue& Value)
 
 void ASaucerPawn::StartBeam()
 {
+	if (bDown)
+	{
+		return;
+	}
 	bBeamHeld = true;
 	BeamHeldTime = 0.f;
 	BeamStarted();
@@ -227,6 +282,8 @@ void ASaucerPawn::Tick(float DeltaSeconds)
 	UpdateLift(DeltaSeconds);
 	UpdateHull(DeltaSeconds);
 	UpdateBeamLight(DeltaSeconds);
+	UpdatePowerHeat(DeltaSeconds);
+	UpdateRim();
 }
 
 void ASaucerPawn::UpdateHover(float DeltaSeconds)
@@ -239,6 +296,14 @@ void ASaucerPawn::UpdateHover(float DeltaSeconds)
 	if (LiftTarget.IsValid())
 	{
 		Params.AddIgnoredActor(LiftTarget->GetOwner());
+	}
+	// Transformer poles aren't ground: hanging over one to refill shouldn't lift the saucer 8 m.
+	for (const TWeakObjectPtr<ATransformer>& Transformer : Transformers)
+	{
+		if (Transformer.IsValid())
+		{
+			Params.AddIgnoredActor(Transformer.Get());
+		}
 	}
 	FCollisionObjectQueryParams GroundTypes;
 	GroundTypes.AddObjectTypesToQuery(ECC_WorldStatic);
@@ -256,7 +321,9 @@ void ASaucerPawn::UpdateHover(float DeltaSeconds)
 	}
 
 	FVector NewLocation = Location;
-	NewLocation.Z = FMath::FInterpTo(Location.Z, GroundZ + HoverHeight, DeltaSeconds, HoverFollowSpeed);
+	// Without Power it sinks, slowly, until it rests on the ground.
+	const float TargetZ = bDown ? GroundZ + Collision->GetScaledSphereRadius() * 0.5f : GroundZ + HoverHeight;
+	NewLocation.Z = FMath::FInterpTo(Location.Z, TargetZ, DeltaSeconds, bDown ? 0.8f : HoverFollowSpeed);
 	SetActorLocation(NewLocation, true);
 }
 
@@ -400,4 +467,74 @@ void ASaucerPawn::TakeAboard()
 	OnTargetLifted.Broadcast(Target, Kind);
 	TakenAboard(Target, Kind);
 	Target->Destroy();
+}
+
+// --- Power and Heat ---
+
+ATransformer* ASaucerPawn::FindFeedingTransformer() const
+{
+	const FVector Location = GetActorLocation();
+	for (const TWeakObjectPtr<ATransformer>& Transformer : Transformers)
+	{
+		if (Transformer.IsValid() && Transformer->CanFeed(Location))
+		{
+			return Transformer.Get();
+		}
+	}
+	return nullptr;
+}
+
+void ASaucerPawn::UpdatePowerHeat(float DeltaSeconds)
+{
+	ATransformer* Feeder = bDown ? nullptr : FindFeedingTransformer();
+	const ULiftableComponent* Lifted = LiftTarget.Get();
+
+	FPowerHeatInputs Inputs;
+	Inputs.bHovering = !bDown;
+	Inputs.bBeamOn = bBeamHeld;
+	Inputs.bLiftingPerson = Lifted && Lifted->Kind == ETargetKind::Person;
+	Inputs.bDrawingPower = Feeder != nullptr;
+
+	const float Drawn = PowerHeat->Step(DeltaSeconds, Inputs);
+	if (Feeder && Drawn > 0.f)
+	{
+		Feeder->Feed(Drawn);
+	}
+
+#if !UE_BUILD_SHIPPING
+	// A stand-in for the HUD: Power, Heat and who's coming, top left.
+	if (bShowDebugReadout && GEngine && IsPlayerControlled())
+	{
+		static const TCHAR* LevelNames[] = { TEXT("calm"), TEXT("police"), TEXT("helicopter") };
+		GEngine->AddOnScreenDebugMessage(static_cast<uint64>(GetUniqueID()), 0.f, FColor::White,
+			FString::Printf(TEXT("Power %3.0f   Heat %3.0f (%s)%s%s"), PowerHeat->GetPower(), PowerHeat->GetHeat(),
+				LevelNames[static_cast<int32>(PowerHeat->GetHeatLevel())], Feeder ? TEXT("   drawing power") : TEXT(""),
+				bDown ? TEXT("   SAUCER DOWN") : TEXT("")));
+	}
+#endif
+}
+
+void ASaucerPawn::UpdateRim()
+{
+	if (!RimMaterial)
+	{
+		return;
+	}
+	if (!RimTint)
+	{
+		RimTint = UMaterialInstanceDynamic::Create(RimMaterial, this);
+		Rim->SetMaterial(0, RimTint);
+	}
+	const FLinearColor Colour = FLinearColor::LerpUsingHSV(CalmRimColour, HotRimColour, PowerHeat->GetHeatFraction());
+	RimTint->SetVectorParameterValue(TEXT("Color"), Colour);
+	RimGlow->SetLightColor(Colour);
+	RimGlow->SetVisibility(!bDown);
+}
+
+void ASaucerPawn::HandlePowerEmpty()
+{
+	bDown = true;
+	StopBeam();
+	UE_LOG(LogTribute, Log, TEXT("Power ran out: the saucer is going down"));
+	PowerFailed();
 }

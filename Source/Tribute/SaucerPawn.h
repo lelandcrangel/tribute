@@ -19,6 +19,10 @@ class UInputMappingContext;
 class USphereComponent;
 class USpotLightComponent;
 class USpringArmComponent;
+class UPointLightComponent;
+class UPowerHeatComponent;
+class UMaterialInstanceDynamic;
+class ATransformer;
 class UStaticMeshComponent;
 struct FInputActionValue;
 
@@ -37,6 +41,7 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void NotifyControllerChanged() override;
 	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void BeginPlay() override;
 
 	// --- Parts ---
 
@@ -61,6 +66,30 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Saucer")
 	TObjectPtr<UFloatingPawnMovement> Movement;
+
+	/** Power and Heat. The saucer steps them every frame with what it's doing. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Saucer")
+	TObjectPtr<UPowerHeatComponent> PowerHeat;
+
+	/** A band around the hull that shows Heat: blue when calm, red when the town is hunting. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Saucer")
+	TObjectPtr<UStaticMeshComponent> Rim;
+
+	/** Throws the rim's colour on the ground under the saucer, so Heat reads at night. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Saucer")
+	TObjectPtr<UPointLightComponent> RimGlow;
+
+	/** The rim's colour at no Heat. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Heat")
+	FLinearColor CalmRimColour = FLinearColor(0.1f, 0.45f, 1.f);
+
+	/** The rim's colour at full Heat. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Heat")
+	FLinearColor HotRimColour = FLinearColor(1.f, 0.08f, 0.03f);
+
+	/** Shows Power and Heat as text on screen until the HUD exists. Never in a Shipping build. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Heat")
+	bool bShowDebugReadout = true;
 
 	// --- Hover and tilt ---
 
@@ -189,7 +218,22 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Saucer", meta = (DisplayName = "Taken Aboard"))
 	void TakenAboard(AActor* Target, ETargetKind Kind);
 
+	/** Power ran out: the hum dies and the saucer sinks to the ground. */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Saucer", meta = (DisplayName = "Power Failed"))
+	void PowerFailed();
+
+	/** True once Power has run out and the saucer is on the ground. */
+	UFUNCTION(BlueprintPure, Category = "Saucer")
+	bool IsDown() const { return bDown; }
+
 private:
+	UFUNCTION()
+	void HandlePowerEmpty();
+
+	void UpdatePowerHeat(float DeltaSeconds);
+	void UpdateRim();
+	ATransformer* FindFeedingTransformer() const;
+
 	void BuildDefaultInput();
 	void Move(const FInputActionValue& Value);
 
@@ -217,4 +261,15 @@ private:
 	bool bHasGround = false;
 
 	TWeakObjectPtr<ULiftableComponent> LiftTarget;
+
+	/** Every transformer in the level, found once at BeginPlay. There are only a handful. */
+	TArray<TWeakObjectPtr<ATransformer>> Transformers;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialInstanceDynamic> RimTint;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialInterface> RimMaterial;
+
+	bool bDown = false;
 };
