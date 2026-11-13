@@ -105,6 +105,12 @@ Each day becomes one itch.io post with screenshots.
   and a box and reading the manifest back from the log and the screen.
 - The HUD is laid out in C++ rather than a widget asset for now, so it was testable tonight; a WBP_HUD
   can restyle it later.
+- Packaged the raid as a Mac Shipping build: it built in under two minutes on top of the earlier cook,
+  and the staged app, zipped (601 MB) and unzipped in a clean folder, opened on the Valley with the herds,
+  the saucer and the HUD counting down. Listing the package confirmed the map, DT_Manifests and the engine
+  shapes the grey boxes are made of all went in. Not signed or notarized yet.
+- The zip is 601 MB of a 1 GB budget, almost all of it shaders and engine content; the game itself adds
+  a few megabytes so far.
 - Still to check by hand: WASD and the stick, and how the lean looks in motion.
 - Noted for the art pass: auto-exposure lifts the moonlit night to daylight, the beam's pool of light is
   blown out, and from the three-quarter camera the hull hides the thing being lifted.
