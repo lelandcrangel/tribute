@@ -16,6 +16,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Kismet/GameplayStatics.h"
 #include "Mothership.h"
+#include "TimerManager.h"
 #include "PowerHeatComponent.h"
 #include "SaucerPawn.h"
 #include "TributeGameState.h"
@@ -342,6 +343,107 @@ FReply UTributeDebriefWidget::NativeOnKeyDown(const FGeometry& InGeometry, const
 	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
+// --- The title and pause cards ---
+
+UTextBlock* UTributeCardWidget::AddText(UPanelWidget* Parent, const FString& Text, int32 Size, const FLinearColor& Colour)
+{
+	UTextBlock* Block = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+	Block->SetText(FText::FromString(Text));
+	FSlateFontInfo Font = Block->GetFont();
+	Font.Size = Size;
+	Block->SetFont(Font);
+	Block->SetColorAndOpacity(FSlateColor(Colour));
+	Block->SetJustification(ETextJustify::Center);
+	Parent->AddChild(Block);
+	return Block;
+}
+
+void UTributeCardWidget::Build(ETributeCard InCard)
+{
+	Card = InCard;
+	SetIsFocusable(true);
+	if (!WidgetTree || WidgetTree->RootWidget)
+	{
+		return;
+	}
+	UCanvasPanel* Root = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("Root"));
+	WidgetTree->RootWidget = Root;
+
+	UBorder* Panel = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+	Panel->SetBrushColor(FLinearColor(0.f, 0.f, 0.02f, Card == ETributeCard::Title ? 0.9f : 0.75f));
+	Panel->SetPadding(FMargin(70.f, 44.f));
+	UCanvasPanelSlot* PanelSlot = Root->AddChildToCanvas(Panel);
+	PanelSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+	PanelSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+	PanelSlot->SetAutoSize(true);
+	UVerticalBox* Box = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+	Panel->SetContent(Box);
+
+	const FLinearColor White(1.f, 1.f, 1.f);
+	const FLinearColor Grey(0.65f, 0.67f, 0.72f);
+	const FLinearColor Glow(0.45f, 0.85f, 1.f);
+	auto Gap = [this, Box](float Height)
+	{
+		USizeBox* Spacer = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+		Spacer->SetHeightOverride(Height);
+		Box->AddChild(Spacer);
+	};
+
+	if (Card == ETributeCard::Title)
+	{
+		AddText(Box, TEXT("TRIBUTE"), 64, Glow);
+		AddText(Box, TEXT("Fill the manifest before the ship comes. Then answer its call."), 16, Grey);
+	}
+	else
+	{
+		AddText(Box, TEXT("PAUSED"), 48, White);
+	}
+	Gap(34.f);
+
+	// The controls, in the compact format: groups side by side, keys over pad.
+	UHorizontalBox* Controls = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+	Box->AddChild(Controls);
+	const TCHAR* Groups[3][3] = {
+		{ TEXT("FLY"), TEXT("WASD"), TEXT("left stick") },
+		{ TEXT("BEAM"), TEXT("hold Space, tap to pulse"), TEXT("hold A, tap to pulse") },
+		{ TEXT("PAUSE"), TEXT("Esc"), TEXT("Start") },
+	};
+	for (const auto& Group : Groups)
+	{
+		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		UHorizontalBoxSlot* ColumnSlot = Controls->AddChildToHorizontalBox(Column);
+		ColumnSlot->SetPadding(FMargin(26.f, 0.f));
+		AddText(Column, Group[0], 13, Grey);
+		AddText(Column, Group[1], 17, White);
+		AddText(Column, Group[2], 15, Grey);
+	}
+	Gap(34.f);
+
+	AddText(Box, Card == ETributeCard::Title ? TEXT("Space or A to begin") : TEXT("Esc or Start to resume"), 18, White);
+	Gap(26.f);
+	AddText(Box, TEXT("\u00A9 2026 Leland Rangel. All rights reserved."), 12, Grey);
+}
+
+FReply UTributeCardWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	const FKey Key = InKeyEvent.GetKey();
+	ATributeHUD* HUD = GetOwningPlayer() ? GetOwningPlayer()->GetHUD<ATributeHUD>() : nullptr;
+	if (HUD)
+	{
+		if (Card == ETributeCard::Title && (Key == EKeys::SpaceBar || Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom))
+		{
+			HUD->StartNight();
+			return FReply::Handled();
+		}
+		if (Card == ETributeCard::Pause && (Key == EKeys::Escape || Key == EKeys::Gamepad_Special_Right || Key == EKeys::P))
+		{
+			HUD->TogglePause();
+			return FReply::Handled();
+		}
+	}
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
 // --- The HUD actor ---
 
 ATributeHUD::ATributeHUD()
@@ -381,5 +483,85 @@ void ATributeHUD::BeginPlay()
 		{
 			HUDWidget->AddToViewport();
 		}
+	}
+	if (bShowTitleCard)
+	{
+		ShowCard(ETributeCard::Title);
+	}
+}
+
+void ATributeHUD::ShowCard(ETributeCard Card)
+{
+	APlayerController* Player = GetOwningPlayerController();
+	if (!Player || CardWidget)
+	{
+		return;
+	}
+	CardWidget = CreateWidget<UTributeCardWidget>(Player, UTributeCardWidget::StaticClass());
+	CardWidget->Build(Card);
+	CardWidget->AddToViewport(20);
+	if (ATributeGameState* State = GetWorld()->GetGameState<ATributeGameState>())
+	{
+		State->HoldClock(true);
+	}
+	// The night waits behind the card. The title lets the saucer rise to its hover first, so the valley
+	// behind the card is the view the night starts from; the pause card stops everything at once.
+	if (Card == ETributeCard::Title)
+	{
+		GetWorldTimerManager().SetTimer(PauseTimer, FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			if (CardWidget)
+			{
+				UGameplayStatics::SetGamePaused(this, true);
+			}
+		}), 1.5f, false);
+	}
+	else
+	{
+		UGameplayStatics::SetGamePaused(this, true);
+	}
+	FInputModeUIOnly Mode;
+	Mode.SetWidgetToFocus(CardWidget->TakeWidget());
+	Player->SetInputMode(Mode);
+}
+
+void ATributeHUD::CloseCard()
+{
+	APlayerController* Player = GetOwningPlayerController();
+	if (CardWidget)
+	{
+		CardWidget->RemoveFromParent();
+		CardWidget = nullptr;
+	}
+	GetWorldTimerManager().ClearTimer(PauseTimer);
+	UGameplayStatics::SetGamePaused(this, false);
+	if (ATributeGameState* State = GetWorld()->GetGameState<ATributeGameState>())
+	{
+		State->HoldClock(false);
+	}
+	if (Player)
+	{
+		Player->SetInputMode(FInputModeGameOnly());
+	}
+}
+
+void ATributeHUD::StartNight()
+{
+	CloseCard();
+}
+
+void ATributeHUD::TogglePause()
+{
+	if (DebriefWidget)
+	{
+		return;
+	}
+	if (CardWidget)
+	{
+		CloseCard();
+	}
+	else
+	{
+		ShowCard(ETributeCard::Pause);
 	}
 }

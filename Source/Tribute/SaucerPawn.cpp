@@ -25,6 +25,7 @@
 #include "PowerHeatComponent.h"
 #include "Responder.h"
 #include "TargetCharacter.h"
+#include "TributeHUD.h"
 #include "Transformer.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -150,6 +151,11 @@ void ASaucerPawn::BuildDefaultInput()
 		MoveAction = NewObject<UInputAction>(this, TEXT("IA_Move_Default"));
 		MoveAction->ValueType = EInputActionValueType::Axis2D;
 	}
+	if (!PauseAction)
+	{
+		PauseAction = NewObject<UInputAction>(this, TEXT("IA_Pause_Default"));
+		PauseAction->ValueType = EInputActionValueType::Boolean;
+	}
 	if (!BeamAction)
 	{
 		BeamAction = NewObject<UInputAction>(this, TEXT("IA_Beam_Default"));
@@ -187,6 +193,10 @@ void ASaucerPawn::BuildDefaultInput()
 	FEnhancedActionKeyMapping& StickMapping = InputMapping->MapKey(MoveAction, EKeys::Gamepad_Left2D);
 	StickMapping.Modifiers.Add(NewObject<UInputModifierDeadZone>(InputMapping));
 
+	// Pause isn't a saucer action; the HUD handles it, but it goes through the same mapping.
+	InputMapping->MapKey(PauseAction, EKeys::Escape);
+	InputMapping->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
+
 	InputMapping->MapKey(BeamAction, EKeys::SpaceBar);
 	InputMapping->MapKey(BeamAction, EKeys::Gamepad_FaceButton_Bottom);
 }
@@ -216,6 +226,18 @@ void ASaucerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ASaucerPawn::Move);
 		Input->BindAction(BeamAction, ETriggerEvent::Started, this, &ASaucerPawn::StartBeam);
 		Input->BindAction(BeamAction, ETriggerEvent::Completed, this, &ASaucerPawn::StopBeam);
+		Input->BindAction(PauseAction, ETriggerEvent::Started, this, &ASaucerPawn::RequestPause);
+	}
+}
+
+void ASaucerPawn::RequestPause()
+{
+	if (APlayerController* Player = Cast<APlayerController>(Controller))
+	{
+		if (ATributeHUD* HUD = Player->GetHUD<ATributeHUD>())
+		{
+			HUD->TogglePause();
+		}
 	}
 }
 

@@ -167,6 +167,9 @@ public:
 	TObjectPtr<UInputAction> BeamAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Saucer|Input")
+	TObjectPtr<UInputAction> PauseAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Saucer|Input")
 	TObjectPtr<UInputMappingContext> InputMapping;
 
 	// --- What other systems listen to ---
@@ -264,6 +267,7 @@ private:
 
 	void BuildDefaultInput();
 	void Move(const FInputActionValue& Value);
+	void RequestPause();
 
 	void UpdateHover(float DeltaSeconds);
 	void UpdateHull(float DeltaSeconds);

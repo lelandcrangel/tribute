@@ -40,7 +40,7 @@ void ATributeGameState::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (Clock.Advance(DeltaSeconds))
+	if (!bClockHeld && Clock.Advance(DeltaSeconds))
 	{
 		UE_LOG(LogTribute, Log, TEXT("The ship is here. Manifest %.0f%% filled"), Manifest.FillFraction() * 100.f);
 		OnShipArrived.Broadcast();

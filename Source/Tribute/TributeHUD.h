@@ -112,6 +112,32 @@ private:
 	float ReadyIn = 1.5f;
 };
 
+/** Which card a UTributeCardWidget is. */
+UENUM()
+enum class ETributeCard : uint8
+{
+	Title, // before the night: the name, the controls, Space or A to begin
+	Pause, // Esc or Start mid-night: the controls, Esc or Start to resume
+};
+
+/** The title and pause cards. Both show the controls in the compact format and end with the copyright line. */
+UCLASS()
+class TRIBUTE_API UTributeCardWidget : public UUserWidget
+{
+	GENERATED_BODY()
+
+public:
+	/** Lays the card out. Call once, before it's added to the screen. */
+	void Build(ETributeCard InCard);
+
+protected:
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+
+private:
+	UTextBlock* AddText(class UPanelWidget* Parent, const FString& Text, int32 Size, const FLinearColor& Colour);
+	ETributeCard Card = ETributeCard::Title;
+};
+
 UCLASS()
 class TRIBUTE_API ATributeHUD : public AHUD
 {
@@ -130,6 +156,18 @@ public:
 	/** Hides the raid HUD and puts the debrief up, taking keyboard and pad focus. */
 	void ShowDebrief(const FRunResult& Result);
 
+	/** Shows the title card over a paused game before the night starts. Off for quick testing in the editor. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "HUD")
+	bool bShowTitleCard = true;
+
+	/** Leaves the title card and starts the night (`ke * StartNight` in the console skips the card). */
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void StartNight();
+
+	/** Opens the pause card, or closes it. Esc or Start. */
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void TogglePause();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -139,4 +177,13 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTributeDebriefWidget> DebriefWidget;
+
+	/** The title or pause card while one is up. */
+	UPROPERTY(Transient)
+	TObjectPtr<UTributeCardWidget> CardWidget;
+
+	void ShowCard(ETributeCard Card);
+	void CloseCard();
+
+	FTimerHandle PauseTimer;
 };

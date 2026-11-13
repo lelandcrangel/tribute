@@ -83,6 +83,10 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Manifest")
 	FRaidClock Clock;
 
+	/** Stops or restarts the clock: it waits while the title card is up, so the night starts at a full 7:00. */
+	UFUNCTION(BlueprintCallable, Category = "Manifest")
+	void HoldClock(bool bHold) { bClockHeld = bHold; }
+
 	/** For testing: brings the ship in now (`ke * SkipToArrival` in the console). */
 	UFUNCTION(BlueprintCallable, Category = "Manifest")
 	void SkipToArrival() { Clock.SecondsLeft = FMath::Min(Clock.SecondsLeft, 1.f); }
@@ -98,4 +102,7 @@ public:
 	/** The clock ran out: the ship is here. The run moves on to the arrival. */
 	UPROPERTY(BlueprintAssignable, Category = "Manifest")
 	FOnShipArrived OnShipArrived;
+
+private:
+	bool bClockHeld = false;
 };

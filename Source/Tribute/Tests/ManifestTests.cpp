@@ -2,6 +2,7 @@
 // extras not making up for short lines, and the countdown to the ship.
 
 #include "Manifest.h"
+#include "TributeGameState.h"
 #include "Misc/AutomationTest.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -76,6 +77,22 @@ bool FRaidClockTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("The ship arrives as it runs out"), Clock.Advance(1.f));
 	TestEqual(TEXT("It reads 0:00"), Clock.ToMinutesSeconds(), FString(TEXT("0:00")));
 	TestFalse(TEXT("It only arrives once"), Clock.Advance(1.f));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FRunScoreTest, "Tribute.Manifest.ScoreAddsUpTheNight", ManifestTestFlags)
+bool FRunScoreTest::RunTest(const FString& Parameters)
+{
+	FManifest Full = FManifest::FromRow(FManifestRow());
+	for (int32 i = 0; i < 3; ++i) { Full.Count(ETargetKind::Cow); }
+	for (int32 i = 0; i < 2; ++i) { Full.Count(ETargetKind::Person); }
+	Full.Count(ETargetKind::NamedObject);
+	const FManifest Empty = FManifest::FromRow(FManifestRow());
+
+	TestEqual(TEXT("A perfect night: 1000 + 250 + 500 + 500"), FRunResult::ScoreFor(ERunEnding::Docked, Full, 13, 0, 0.f), 2250);
+	TestEqual(TEXT("Heat left behind costs 2 a point"), FRunResult::ScoreFor(ERunEnding::Docked, Full, 13, 0, 50.f), 2150);
+	TestEqual(TEXT("Left behind loses the docking 500"), FRunResult::ScoreFor(ERunEnding::LeftBehind, Full, 0, 3, 0.f), 1250);
+	TestEqual(TEXT("Nothing taken, never docked, all Heat: never below zero"), FRunResult::ScoreFor(ERunEnding::SaucerDown, Empty, 0, 0, 100.f), 0);
 	return true;
 }
 
