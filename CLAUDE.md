@@ -178,16 +178,21 @@ editor while it cooks), pull the repo and:
    `Binaries/Mac/Tribute-Mac-Shipping.app` (no content, no dylibs), which crashes at launch. The real
    app is `Saved/StagedBuilds/Mac/Tribute-Mac-Shipping.app`; sign, zip and test that one.
 
-2. **Sign** the app with the hardened runtime:
+2. **Sign** the app with the hardened runtime. Copy the staged app out as `Tribute.app` (renaming it is
+   fine), then sign every dylib inside it first and the app last. `--deep` alone can miss the dylibs Unreal
+   keeps under `Contents/UE/...`, and notarization rejects unsigned code:
 
    ```
-   codesign --force --deep --options runtime --timestamp \
-     --sign "Developer ID Application: <Name> (<TEAMID>)" Tribute.app
+   ID="Developer ID Application: Leland Rangel (ACLJK383JD)"
+   find Tribute.app -type f -name "*.dylib" -exec codesign --force --options runtime --timestamp --sign "$ID" {} \;
+   codesign --force --options runtime --timestamp --sign "$ID" Tribute.app
+   codesign --verify --deep --strict --verbose=2 Tribute.app
    ```
 
-   If the signed app crashes on launch and the unsigned one doesn't, the hardened runtime is blocking
-   something. Add an entitlements file with `com.apple.security.cs.disable-library-validation` and pass
-   it with `--entitlements`. Add entitlements only when a crash calls for them.
+   The bundle id is `com.lelandrangel.Tribute` (`CodeSigningPrefix` in `Config/DefaultEngine.ini`). On
+   Nov 12 the signed raid ran under the hardened runtime with no entitlements. If a later signed build
+   crashes on launch and the unsigned one doesn't, add an entitlements file with
+   `com.apple.security.cs.disable-library-validation` and pass it with `--entitlements`, and only then.
 3. **Notarize and staple.** The `notary` keychain profile is set up once with
    `xcrun notarytool store-credentials "notary" --apple-id <Apple ID> --team-id <TEAMID>`, using an
    app-specific password. Leland does that step himself; never put credentials in this repo or a
