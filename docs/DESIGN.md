@@ -142,7 +142,9 @@ disqualified, so the gap is a buffer, not spare time.
 
 **Friday, Nov 13: the raid in grey boxes**
 
-- [ ] The saucer pawn: hover, tilt, beam, lift
+- [ ] The saucer pawn: hover, tilt, beam, lift (*Nov 12, built on the Mac and play-tested in the Valley grey
+      box: hover, beam, lift, drop and pulse work. Keys, the pad and the lean still need a hand on the
+      controls*)
 - [ ] Cows and people: wander, panic, get lifted
 - [ ] Power, transformers, Heat, the police car
 - [ ] Manifest, clock and HUD

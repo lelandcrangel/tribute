@@ -45,6 +45,28 @@ Each day becomes one itch.io post with screenshots.
 
 ## Day 2, Friday Nov 13: the raid in grey boxes
 
+- Started a night early, on the Mac (the PC setup wasn't working yet). The project got its C++ module and
+  the saucer: it floats 9 m up and follows the ground, its hull bobs, spins and leans into movement, and
+  holding the beam catches the nearest liftable thing and lifts it, turning, into the hull. A tap under a
+  quarter second is a pulse instead, which is how the tribute will be answered. Input is built in code, so
+  it plays before any input assets exist.
+- The grey-box Valley map is the engine's template with the floor stretched to 500 m, six boxes to lift
+  and two barns.
+- How it was tested: the agent can't hold a key through the editor's tools, so it moved the saucer over
+  each box and held the beam from the console (`ke * StartBeam`), reading heights back and taking
+  screenshots from inside the editor. The lift was slowed for one session to get a picture of it.
+- What the agent got wrong:
+  - Its ground trace only looked for static geometry, and the template's floor is movable, so the
+    first play test had the saucer sitting on the floor. Reading the floor's collision settings found it.
+  - Letting go of a box mid-lift threw it upward: physics picked up the beam's lift speed. Now it drops.
+  - It launched the editor with `open -a ... Tribute.uproject`, which opened the Project Browser instead of
+    the project, and it waited three minutes on a port that was never going to open.
+  - This session started before the editor, so its MCP connection failed and wouldn't come back. The
+    server was fine, so a small script talks to it over HTTP instead.
+- Still to check by hand: WASD and the stick, and how the lean looks in motion.
+- Noted for the art pass: auto-exposure lifts the moonlit night to daylight, the beam's pool of light is
+  blown out, and from the three-quarter camera the hull hides the thing being lifted.
+
 ## Day 3, Saturday Nov 14: the ship
 
 ## Day 4, Sunday Nov 15: shipping it

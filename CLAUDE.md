@@ -67,12 +67,14 @@ diff and review. The Blueprints keep the tuning, meshes and effects editable in 
 
 | System | Class / asset | Notes |
 | --- | --- | --- |
-| Saucer | `ASaucerPawn` (C++) → `BP_Saucer` | `FloatingPawnMovement`, a down trace for the beam, a lift that turns the target as it rises |
+| Saucer | `ASaucerPawn` (C++) → `BP_Saucer` | Hovers 9 m up, leans, holds a beam (tap = pulse). Input is built in code until `IA_`/`IMC_` assets exist. `BP_Saucer` not made yet |
+| Liftable things | `ULiftableComponent`, `ALiftableProp` | The component marks what the beam can take and what it counts as (cow, person, named object); the prop is a physics box for grey boxes and the named object |
 | Cows and people | `ATargetCharacter` → `BP_Cow`, `BP_Person` | AIController: wander with `MoveTo`, flee when the beam is near |
 | Power and Heat | `UPowerHeatComponent` on the saucer | Police at 45% Heat, the helicopter at 80%. Heat falls when you lie low |
 | Responders | `AResponder` → `BP_PoliceCar`, `BP_Helicopter` | Chase on the NavMesh, with a spotlight cone |
 | Manifest and clock | `ATributeGameState`, row in `DT_Manifests` | 3 cows, 2 people, 1 named object; the ship arrives at 7:00 |
-| Run flow | `ATributeGameMode` | Raid → arrival → tribute → dock and ascent, or saucer down, or left behind |
+| Run flow | `ATributeGameMode` | Raid → arrival → tribute → dock and ascent, or saucer down, or left behind. For now it only spawns the saucer |
+| Map | `Content/Tribute/Maps/Valley` | Grey box: the engine template, floor scaled to 500 m, six liftable boxes, two barns. Startup and game default map |
 | Mothership | `BP_Mothership` | 8 sectors on dynamic material instances (emissive colour and intensity) |
 | Tribute | `UTributeSequencer` (C++) | Spin, catch, pulse, stop, new colour. Reads `DT_Patterns` with a seed and runs the motif check |
 | Arrival and ascent | `LS_Arrival`, `LS_Ascent` | Level Sequences, started by the GameMode |
@@ -99,6 +101,11 @@ Content lives under `Content/Tribute/` (`Maps`, `Saucer`, `Targets`, `Mothership
 - **Live Coding misses new reflected C++** (new classes, `UPROPERTY`, `UFUNCTION`). Close the editor,
   build, and reopen.
 - **Never widen the server.** Leave Additional Allowed Origins empty.
+- **Opening the editor from a shell:** `open -n -a "$HOME/Games/UE_5.8/Engine/Binaries/Mac/UnrealEditor.app" --args
+  "$PWD/Tribute.uproject" -ExecCmds="ModelContextProtocol.StartServer"`. The project has to go after `--args`.
+- **Testing the beam without a keyboard:** the editor's Cmd box runs `ke * StartBeam` and `ke * StopBeam`
+  (`ke * StartBeam | ke * StopBeam` is a tap, so a pulse). Slate's PressKey only taps, and the game viewport
+  isn't a Slate ref, so holds go through the console. Lifts and pulses log under `LogTribute`.
 
 ## Verifying
 
@@ -240,6 +247,17 @@ because Sunday has no time for it.
 - **An empty project already zips to 611 MB on the Mac.** About 505 MB is the pak, mostly shaders (ray
   tracing and Substrate are on), plus a 272 MB executable. The jam limit is 1 GB, so check the size of
   every package, and turn off ray tracing or Substrate if they aren't earning their space.
+- **`open -a UnrealEditor.app Tribute.uproject` opens the Project Browser.** `open` hands the project over as
+  a document event, which the editor ignores, so it started with no project. Pass the path after `--args`.
+- **A session that starts before the editor can't reach the MCP later.** `unreal-mcp` failed with
+  ECONNREFUSED at session start, and reconnecting in /mcp didn't bring it back. The server itself was fine
+  and answers plain HTTP, so `Scripts/ue_mcp_call.py` and `Scripts/ue_mcp_describe.py` call the same tools.
+  Better: open the editor first.
+- **The saucer sat on the floor instead of hovering.** Its ground trace looked only for `WorldStatic`, and
+  the template map's floor is `WorldDynamic` (BlockAllDynamic, Movable). The trace now takes both. Anything
+  that's ground to the saucer must be one of those two; props are `PhysicsBody` and cows `Pawn`.
+- **A box let go mid-lift flew upward.** Turning physics back on kept the speed the beam had been moving
+  it at. `ULiftableComponent::EndLift` clears the velocity so it drops.
 - **There's no MCP "Instructions" setting in 5.8.** The design doc's step comes from the 5.9 docs.
   Claude Code reads this `CLAUDE.md` from the project folder anyway.
 - **A viewport capture is too big to read inline.** `CaptureViewport` returns the PNG as base64 (about
