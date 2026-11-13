@@ -9,7 +9,7 @@
 
 namespace PowerHeatTests
 {
-	constexpr EAutomationTestFlags Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+	constexpr EAutomationTestFlags PowerHeatTestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 
 	UPowerHeatComponent* MakeMeters()
 	{
@@ -51,7 +51,7 @@ namespace PowerHeatTests
 
 using namespace PowerHeatTests;
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatHoverDrainsTest, "Tribute.PowerHeat.HoveringDrainsPower", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatHoverDrainsTest, "Tribute.PowerHeat.HoveringDrainsPower", PowerHeatTestFlags)
 bool FPowerHeatHoverDrainsTest::RunTest(const FString& Parameters)
 {
 	UPowerHeatComponent* Meters = MakeMeters();
@@ -61,7 +61,7 @@ bool FPowerHeatHoverDrainsTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatBeamDrainsFasterTest, "Tribute.PowerHeat.BeamDrainsFaster", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatBeamDrainsFasterTest, "Tribute.PowerHeat.BeamDrainsFaster", PowerHeatTestFlags)
 bool FPowerHeatBeamDrainsFasterTest::RunTest(const FString& Parameters)
 {
 	UPowerHeatComponent* Hover = MakeMeters();
@@ -73,7 +73,7 @@ bool FPowerHeatBeamDrainsFasterTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatRefillTest, "Tribute.PowerHeat.TransformerRefillsAndStopsWhenFull", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatRefillTest, "Tribute.PowerHeat.TransformerRefillsAndStopsWhenFull", PowerHeatTestFlags)
 bool FPowerHeatRefillTest::RunTest(const FString& Parameters)
 {
 	UPowerHeatComponent* Meters = MakeMeters();
@@ -90,7 +90,7 @@ bool FPowerHeatRefillTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatFullTankTest, "Tribute.PowerHeat.FullTankOverTransformerMakesLittleHeat", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatFullTankTest, "Tribute.PowerHeat.FullTankOverTransformerMakesLittleHeat", PowerHeatTestFlags)
 bool FPowerHeatFullTankTest::RunTest(const FString& Parameters)
 {
 	UPowerHeatComponent* Draining = MakeMeters();
@@ -107,7 +107,7 @@ bool FPowerHeatFullTankTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatPersonHeatTest, "Tribute.PowerHeat.PeopleMakeMoreHeatThanCows", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatPersonHeatTest, "Tribute.PowerHeat.PeopleMakeMoreHeatThanCows", PowerHeatTestFlags)
 bool FPowerHeatPersonHeatTest::RunTest(const FString& Parameters)
 {
 	UPowerHeatComponent* Cow = MakeMeters();
@@ -119,7 +119,7 @@ bool FPowerHeatPersonHeatTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatThresholdsTest, "Tribute.PowerHeat.PoliceAt45HelicopterAt80", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatThresholdsTest, "Tribute.PowerHeat.PoliceAt45HelicopterAt80", PowerHeatTestFlags)
 bool FPowerHeatThresholdsTest::RunTest(const FString& Parameters)
 {
 	UPowerHeatComponent* Meters = MakeMeters();
@@ -157,7 +157,7 @@ bool FPowerHeatThresholdsTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatLieLowTest, "Tribute.PowerHeat.HeatFallsOnlyAfterLyingLow", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatLieLowTest, "Tribute.PowerHeat.HeatFallsOnlyAfterLyingLow", PowerHeatTestFlags)
 bool FPowerHeatLieLowTest::RunTest(const FString& Parameters)
 {
 	UPowerHeatComponent* Meters = MakeMeters();
@@ -177,7 +177,7 @@ bool FPowerHeatLieLowTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatSpotlightTest, "Tribute.PowerHeat.SpotlightAddsHeatAndStopsLyingLow", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatSpotlightTest, "Tribute.PowerHeat.SpotlightAddsHeatAndStopsLyingLow", PowerHeatTestFlags)
 bool FPowerHeatSpotlightTest::RunTest(const FString& Parameters)
 {
 	UPowerHeatComponent* Meters = MakeMeters();
@@ -192,7 +192,7 @@ bool FPowerHeatSpotlightTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatEmptyTest, "Tribute.PowerHeat.ZeroPowerBringsTheSaucerDown", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatEmptyTest, "Tribute.PowerHeat.ZeroPowerBringsTheSaucerDown", PowerHeatTestFlags)
 bool FPowerHeatEmptyTest::RunTest(const FString& Parameters)
 {
 	UPowerHeatComponent* Meters = MakeMeters();

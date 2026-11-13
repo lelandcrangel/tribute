@@ -8,12 +8,12 @@
 
 namespace ManifestTests
 {
-	constexpr EAutomationTestFlags Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+	constexpr EAutomationTestFlags ManifestTestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 }
 
 using namespace ManifestTests;
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FManifestDefaultOrderTest, "Tribute.Manifest.DefaultOrderIsThreeCowsTwoPeopleOneObject", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FManifestDefaultOrderTest, "Tribute.Manifest.DefaultOrderIsThreeCowsTwoPeopleOneObject", ManifestTestFlags)
 bool FManifestDefaultOrderTest::RunTest(const FString& Parameters)
 {
 	const FManifestRow Row;
@@ -26,7 +26,7 @@ bool FManifestDefaultOrderTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FManifestLineFillsOnceTest, "Tribute.Manifest.ALineFillsExactlyOnce", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FManifestLineFillsOnceTest, "Tribute.Manifest.ALineFillsExactlyOnce", ManifestTestFlags)
 bool FManifestLineFillsOnceTest::RunTest(const FString& Parameters)
 {
 	FManifest Manifest = FManifest::FromRow(FManifestRow());
@@ -40,7 +40,7 @@ bool FManifestLineFillsOnceTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FManifestFillFractionTest, "Tribute.Manifest.ExtrasDontMakeUpForShortLines", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FManifestFillFractionTest, "Tribute.Manifest.ExtrasDontMakeUpForShortLines", ManifestTestFlags)
 bool FManifestFillFractionTest::RunTest(const FString& Parameters)
 {
 	FManifest Manifest = FManifest::FromRow(FManifestRow());
@@ -60,7 +60,7 @@ bool FManifestFillFractionTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FRaidClockTest, "Tribute.Manifest.ClockCountsDownToTheShipOnce", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FRaidClockTest, "Tribute.Manifest.ClockCountsDownToTheShipOnce", ManifestTestFlags)
 bool FRaidClockTest::RunTest(const FString& Parameters)
 {
 	FRaidClock Clock;
