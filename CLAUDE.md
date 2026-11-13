@@ -72,10 +72,10 @@ diff and review. The Blueprints keep the tuning, meshes and effects editable in 
 | Cows and people | `ATargetCharacter` (`ACowCharacter`, `APersonCharacter`) → `BP_Cow`, `BP_Person` | `ATargetAIController`: wander about home with pauses, run from a lit beam within the panic radius, go still while lifted, bolt when dropped. Grey-box tinted shapes until the Blueprints exist |
 | Power and Heat | `UPowerHeatComponent` on the saucer | Police at 45% Heat, the helicopter at 80% (called off 5 below). Heat falls after 4 s lying low. The saucer steps it every frame; tests in `Source/Tribute/Tests/PowerHeatTests.cpp`. The rim goes blue to red, with a ground glow |
 | Transformers | `ATransformer` | Refill within 6 m; the first draw blacks the farm out (its yard light and any `FarmLights`); 120 Power each. One at each of the Valley's three farms |
-| Responders | `AResponder` → `BP_PoliceCar`, `BP_Helicopter` | Chase on the NavMesh, with a spotlight cone |
+| Responders | `AResponder` (`APoliceCar`) → `BP_PoliceCar`, `BP_Helicopter` | `AResponderAIController` drives toward the ground under the saucer at 9 m/s (the saucer is faster). The searchlight holds the saucer within 40 m unless a barn is in the way; lit, Heat climbs and can't fall. `ATributeGameMode` sends one from the actor tagged `PoliceStart` at the police level and calls it home when calm. Helicopter not built |
 | Manifest and clock | `ATributeGameState`, row in `DT_Manifests` | 3 cows, 2 people, 1 named object; the ship arrives at 7:00 |
-| Run flow | `ATributeGameMode` | Raid → arrival → tribute → dock and ascent, or saucer down, or left behind. For now it only spawns the saucer |
-| Map | `Content/Tribute/Maps/Valley` | Grey box: the engine template, floor scaled to 500 m, a NavMesh over all of it, 14 cows, 6 people, six liftable boxes, two barns. Startup and game default map |
+| Run flow | `ATributeGameMode` | Raid → arrival → tribute → dock and ascent, or saucer down, or left behind. For now it spawns the saucer and sends the police in and home by Heat level |
+| Map | `Content/Tribute/Maps/Valley` | Grey box: the engine template, floor scaled to 500 m, a NavMesh over all of it, 14 cows, 6 people, six liftable boxes, two barns, three transformers, a `PoliceStart` point. Startup and game default map |
 | Mothership | `BP_Mothership` | 8 sectors on dynamic material instances (emissive colour and intensity) |
 | Tribute | `UTributeSequencer` (C++) | Spin, catch, pulse, stop, new colour. Reads `DT_Patterns` with a seed and runs the motif check |
 | Arrival and ascent | `LS_Arrival`, `LS_Ascent` | Level Sequences, started by the GameMode |

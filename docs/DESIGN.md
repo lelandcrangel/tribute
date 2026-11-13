@@ -148,9 +148,9 @@ disqualified, so the gap is a buffer, not spare time.
 - [ ] Cows and people: wander, panic, get lifted (*Nov 12, built and play-tested in the Valley: 14 cows and
       6 people wander, run from a lit beam, get taken aboard, and bolt when dropped. Real meshes, sounds
       and the Heat from beaming people come later*)
-- [ ] Power, transformers, Heat, the police car (*Nov 12: Power, Heat, transformers, the blackout, the
-      Heat rim and the saucer going down are built and tested (8 automation tests, and a play test). The
-      police car is next*)
+- [x] Power, transformers, Heat, the police car (*Nov 12, built on the Mac and play-tested: Power, Heat,
+      transformers, the blackout, the Heat rim, the saucer going down, and a police car that arrives at
+      45, keeps a searchlight on the saucer, can be outrun, and goes home when calm. 9 automation tests*)
 - [ ] Manifest, clock and HUD
 - [ ] **Package a build tonight** (the jam page's tip for day two), uploaded to itch and downloaded back
       end to end

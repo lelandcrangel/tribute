@@ -90,6 +90,14 @@ Each day becomes one itch.io post with screenshots.
   - Its first rim glow was ten times too bright and turned the valley purple.
   - It decided the Power readout wasn't drawing, because the editor's screenshot tool doesn't capture
     on-screen text. An in-game `shot showui` showed it was there all along.
+- The police car: when Heat passes 45 the GameMode sends one from the edge of town. It drives the
+  NavMesh toward the ground under the saucer, slower than the saucer, and keeps a searchlight on it from
+  up to 40 m unless a barn is in the way. Under the light Heat climbs and can't cool, so the answer is to
+  run. When the town calms down it drives home and disappears. Play-tested end to end: sent at 45,
+  parked 8 m off and lit the saucer, Heat pinned at 100 under the light with the beam off, lost the
+  saucer when it fled 150 m, called off at calm, gone once home.
+- The agent tried to test the police by setting Heat directly; Heat is read-only from outside on purpose,
+  so it raised it the way a player would, by beaming over a transformer.
 - Still to check by hand: WASD and the stick, and how the lean looks in motion.
 - Noted for the art pass: auto-exposure lifts the moonlit night to daylight, the beam's pool of light is
   blown out, and from the three-quarter camera the hull hides the thing being lifted.
