@@ -1,0 +1,214 @@
+// The player's saucer. It hovers a set height over the valley, leans into its movement, and holds a
+// beam down that lifts whatever it catches up into the hull. A quick tap of the beam is a pulse, which
+// is how the player answers the mothership's calls.
+//
+// The rules live here; BP_Saucer gives it a mesh, the beam's look and its sounds through the
+// Blueprint events at the bottom.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Pawn.h"
+#include "LiftableComponent.h"
+#include "SaucerPawn.generated.h"
+
+class UCameraComponent;
+class UFloatingPawnMovement;
+class UInputAction;
+class UInputMappingContext;
+class USphereComponent;
+class USpotLightComponent;
+class USpringArmComponent;
+class UStaticMeshComponent;
+struct FInputActionValue;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTargetLifted, AActor*, Target, ETargetKind, Kind);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeamPulsed, FVector, GroundPoint);
+
+UCLASS()
+class TRIBUTE_API ASaucerPawn : public APawn
+{
+	GENERATED_BODY()
+
+public:
+	ASaucerPawn();
+
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	virtual void NotifyControllerChanged() override;
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+	// --- Parts ---
+
+	/** What the saucer bumps into the world with. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Saucer")
+	TObjectPtr<USphereComponent> Collision;
+
+	/** The hull. It bobs, spins slowly and leans into movement; the rest of the saucer stays level. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Saucer")
+	TObjectPtr<UStaticMeshComponent> Hull;
+
+	/** The beam's light on the ground. On only while the beam is held, and flashes for a pulse. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Saucer")
+	TObjectPtr<USpotLightComponent> BeamLight;
+
+	/** Holds the camera high and behind, looking down at a three-quarter angle. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Saucer")
+	TObjectPtr<USpringArmComponent> CameraBoom;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Saucer")
+	TObjectPtr<UCameraComponent> Camera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Saucer")
+	TObjectPtr<UFloatingPawnMovement> Movement;
+
+	// --- Hover and tilt ---
+
+	/** How high above the ground the saucer floats, in cm. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Hover", meta = (ClampMin = "100"))
+	float HoverHeight = 900.f;
+
+	/** How quickly it rises and sinks to follow the ground. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Hover", meta = (ClampMin = "0.1"))
+	float HoverFollowSpeed = 3.f;
+
+	/** How far the hull bobs up and down while hovering, in cm. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Hover")
+	float BobHeight = 12.f;
+
+	/** Bobs per second. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Hover")
+	float BobRate = 0.5f;
+
+	/** How fast the hull turns on its own, in degrees per second. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Hover")
+	float HullSpinRate = 25.f;
+
+	/** How far the hull leans at full speed, in degrees. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Hover")
+	float MaxTilt = 14.f;
+
+	/** How quickly the lean follows the movement. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Hover", meta = (ClampMin = "0.1"))
+	float TiltFollowSpeed = 5.f;
+
+	// --- Beam and lift ---
+
+	/** How wide the beam is where it reaches the ground, in cm. Anything liftable inside it can be caught. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Beam", meta = (ClampMin = "50"))
+	float BeamRadius = 350.f;
+
+	/** How fast a caught target rises, in cm per second (scaled by its own LiftSpeedScale). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Beam", meta = (ClampMin = "10"))
+	float LiftSpeed = 450.f;
+
+	/** How quickly a caught target drifts into the middle of the beam. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Beam")
+	float LiftCentreSpeed = 2.5f;
+
+	/** How fast a caught target turns as it rises, in degrees per second. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Beam")
+	float LiftSpinRate = 90.f;
+
+	/** A target this close below the hull is taken aboard, in cm. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Beam")
+	float TakeAboardDistance = 150.f;
+
+	/** A beam press shorter than this, in seconds, counts as a pulse. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Beam")
+	float PulseMaxHoldTime = 0.25f;
+
+	/** The beam light's brightness while held, in candelas. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Beam")
+	float BeamBrightness = 40000.f;
+
+	/** How long a pulse's flash lasts, in seconds. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Beam")
+	float PulseFlashTime = 0.15f;
+
+	// --- Input ---
+	// Left empty, these are built in code (WASD and the left stick to fly, Space and A for the beam).
+	// Assign IA_Move, IA_Beam and IMC_Default in BP_Saucer to override them.
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Saucer|Input")
+	TObjectPtr<UInputAction> MoveAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Saucer|Input")
+	TObjectPtr<UInputAction> BeamAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Saucer|Input")
+	TObjectPtr<UInputMappingContext> InputMapping;
+
+	// --- What other systems listen to ---
+
+	/** Something reached the hull. The manifest counts it. */
+	UPROPERTY(BlueprintAssignable, Category = "Saucer")
+	FOnTargetLifted OnTargetLifted;
+
+	/** The beam was tapped. The tribute checks it against the lit sector. */
+	UPROPERTY(BlueprintAssignable, Category = "Saucer")
+	FOnBeamPulsed OnBeamPulsed;
+
+	/** True while the beam is held. Power drains faster and Heat climbs while it is. */
+	UFUNCTION(BlueprintPure, Category = "Saucer")
+	bool IsBeamOn() const { return bBeamHeld; }
+
+	/** True while something is rising up the beam. */
+	UFUNCTION(BlueprintPure, Category = "Saucer")
+	bool IsLifting() const { return LiftTarget.IsValid(); }
+
+	/** Where the beam meets the ground. Cows and people flee from here. */
+	UFUNCTION(BlueprintPure, Category = "Saucer")
+	FVector GetBeamGroundPoint() const;
+
+	// --- Hooks for BP_Saucer's effects and sounds ---
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Saucer", meta = (DisplayName = "Beam Started"))
+	void BeamStarted();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Saucer", meta = (DisplayName = "Beam Stopped"))
+	void BeamStopped();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Saucer", meta = (DisplayName = "Beam Pulsed"))
+	void BeamPulsed(FVector GroundPoint);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Saucer", meta = (DisplayName = "Lift Started"))
+	void LiftStarted(AActor* Target);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Saucer", meta = (DisplayName = "Lift Dropped"))
+	void LiftDropped(AActor* Target);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Saucer", meta = (DisplayName = "Taken Aboard"))
+	void TakenAboard(AActor* Target, ETargetKind Kind);
+
+private:
+	void BuildDefaultInput();
+	void Move(const FInputActionValue& Value);
+	void BeamPressed();
+	void BeamReleased();
+
+	void UpdateHover(float DeltaSeconds);
+	void UpdateHull(float DeltaSeconds);
+	void UpdateBeamLight(float DeltaSeconds);
+	void UpdateLift(float DeltaSeconds);
+
+	/** The nearest liftable thing inside the beam that nothing else is already lifting, or null. */
+	ULiftableComponent* FindTargetInBeam() const;
+	void StartLift(ULiftableComponent* Target);
+	void DropLift();
+	void TakeAboard();
+
+	/** Fits the light's cone to the beam's width at the hover height. */
+	void FitBeamLight();
+
+	bool bBeamHeld = false;
+	float BeamHeldTime = 0.f;
+	float PulseFlashLeft = 0.f;
+	float HoverTime = 0.f;
+	float HullYaw = 0.f;
+	FRotator HullTilt = FRotator::ZeroRotator;
+	float GroundZ = 0.f;
+	bool bHasGround = false;
+
+	TWeakObjectPtr<ULiftableComponent> LiftTarget;
+};

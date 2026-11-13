@@ -3,6 +3,16 @@
 	"EngineAssociation": "{4791325E-A64B-C417-0C23-BE97FDF8F445}",
 	"Category": "",
 	"Description": "",
+	"Modules": [
+		{
+			"Name": "Tribute",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	],
 	"Plugins": [
 		{
 			"Name": "ModelingToolsEditorMode",
