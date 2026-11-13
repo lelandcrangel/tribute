@@ -171,11 +171,13 @@ disqualified, so the gap is a buffer, not spare time.
       each with a debrief and a score; both tribute endings played through in the editor*)
 - [ ] Art pass on the valley: Fab assets, lighting, fog
 - [ ] Sound pass: every action, the tones, the mix
-- [ ] Package a build
+- [ ] Package a build (*Nov 12: the game with the mothership packaged for the Mac (602 MB zip) and ran
+      from a clean folder. Not signed; the Windows build is still to do*)
 
 **Sunday, Nov 15: finish and submit**
 
-- [ ] Morning: title, controls, Options cards, polish, bug fixes
+- [ ] Morning: title, controls, Options cards, polish, bug fixes (*Nov 12: title and pause cards with the
+      controls and the copyright line are built; the Options card waits for the Sound Classes*)
 - [ ] 11:00: feature freeze, then the final Shipping build named `TeamName_GameName.zip`
 - [ ] 12:00: record the 30–60 second video
 - [ ] 13:00: itch page, upload, the jam form, and the last dev log entry

@@ -140,5 +140,8 @@ Each day becomes one itch.io post with screenshots.
   - It closed the editor mid-play, which crashed it; the crash reporter then held the MCP port.
   - The unity build merged three test files and found their constants ambiguous.
 - Still missing for Saturday: clouds, a real hull mesh, the tones (MetaSounds), and any sound at all.
+- Also built ahead: the title card (name, controls in the compact format, the copyright line) and the pause
+  card, and a test for the debrief score. The whole game, mothership included, packaged for the Mac and
+  ran from a clean folder (602 MB zipped).
 
 ## Day 4, Sunday Nov 15: shipping it

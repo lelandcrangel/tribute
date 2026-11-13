@@ -80,7 +80,7 @@ diff and review. The Blueprints keep the tuning, meshes and effects editable in 
 | Tribute | `FTributeRun`, `FTributeCalls`, `FTributeScale` (`TributeRules.h`) | Spin, catch, pulse, stop, new colour; rounds of 3, 4, 6; a pulse in the right pool answers, a wrong pool or 12 s is a miss, three misses and the ship leaves. Calls are seeded and refuse the motif shape. `DT_Patterns` isn't made: calls are generated. Tests in `Tests/TributeTests.cpp` |
 | Arrival and ascent | `ATributeGameMode` | No Level Sequences yet: the GameMode cuts to a fixed camera far out and low for the arrival and for the dock and ascent, and the saucer's camera pulls up wide for the tribute. Police leave, farms black out, the moon dims at arrival. Endings: docked, left behind, saucer down, each with the debrief (`UTributeDebriefWidget`) |
 | Sound | MetaSounds, `SC_Overall` / `SC_Music` / `SC_Effects` | One MetaSound per sector tone |
-| UI | `WBP_Title`, `WBP_Controls`, `WBP_Options`, `WBP_HUD`, `WBP_Debrief` | UMG. The HUD is built: `ATributeHUD` shows `UTributeHUDWidget`, which lays itself out in code (Power, Heat, the countdown, the manifest) until a `WBP_HUD` restyles it. The cards and debrief aren't made |
+| UI | `WBP_Title`, `WBP_Controls`, `WBP_Options`, `WBP_HUD`, `WBP_Debrief` | UMG. The HUD is built: `ATributeHUD` shows `UTributeHUDWidget`, which lays itself out in code (Power, Heat, the countdown, the manifest) until a `WBP_HUD` restyles it. The title and pause cards are built (`UTributeCardWidget`; the title holds the clock, `ke * StartNight` skips it), and the debrief. The Options card isn't: it waits for the Sound Classes |
 | Input | `IA_*`, `IMC_Default` | Enhanced Input, keys and pad |
 
 Content lives under `Content/Tribute/` (`Maps`, `Saucer`, `Targets`, `Mothership`, `UI`, `Audio`,
@@ -104,6 +104,8 @@ Content lives under `Content/Tribute/` (`Maps`, `Saucer`, `Targets`, `Mothership
 - **Never widen the server.** Leave Additional Allowed Origins empty.
 - **Opening the editor from a shell:** `open -n -a "$HOME/Games/UE_5.8/Engine/Binaries/Mac/UnrealEditor.app" --args
   "$PWD/Tribute.uproject" -ExecCmds="ModelContextProtocol.StartServer"`. The project has to go after `--args`.
+- **Testing past the title card:** play starts on the title card with the clock held; `ke * StartNight` in the
+  Cmd box starts the night (send it twice if the card has focus and the first is lost).
 - **Testing the beam without a keyboard:** the editor's Cmd box runs `ke * StartBeam` and `ke * StopBeam`
   (`ke * StartBeam | ke * StopBeam` is a tap, so a pulse). Slate's PressKey only taps, and the game viewport
   isn't a Slate ref, so holds go through the console. Lifts and pulses log under `LogTribute`.
