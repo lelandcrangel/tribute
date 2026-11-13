@@ -53,6 +53,9 @@ void ULiftableComponent::EndLift(ASaucerPawn* Saucer)
 		if (bWasSimulatingPhysics)
 		{
 			Root->SetSimulatePhysics(true);
+			// Physics would carry on the speed the beam was lifting it at and toss it upward; drop it instead.
+			Root->SetPhysicsLinearVelocity(FVector::ZeroVector);
+			Root->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
 		}
 	}
 	if (ACharacter* Character = Cast<ACharacter>(Owner))

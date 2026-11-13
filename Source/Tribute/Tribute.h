@@ -3,3 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+/** The game's log: lifts, pulses and run events, for testing and for reading a play session back. */
+TRIBUTE_API DECLARE_LOG_CATEGORY_EXTERN(LogTribute, Log, All);

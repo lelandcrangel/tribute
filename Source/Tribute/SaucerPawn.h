@@ -149,6 +149,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Saucer")
 	FOnBeamPulsed OnBeamPulsed;
 
+	/** Turns the beam on, as holding Space or A does. Also for Blueprints and console testing (`ke * StartBeam`). */
+	UFUNCTION(BlueprintCallable, Category = "Saucer")
+	void StartBeam();
+
+	/** Turns the beam off, as letting go does. If it was on for less than PulseMaxHoldTime, that was a pulse. */
+	UFUNCTION(BlueprintCallable, Category = "Saucer")
+	void StopBeam();
+
 	/** True while the beam is held. Power drains faster and Heat climbs while it is. */
 	UFUNCTION(BlueprintPure, Category = "Saucer")
 	bool IsBeamOn() const { return bBeamHeld; }
@@ -184,8 +192,6 @@ public:
 private:
 	void BuildDefaultInput();
 	void Move(const FInputActionValue& Value);
-	void BeamPressed();
-	void BeamReleased();
 
 	void UpdateHover(float DeltaSeconds);
 	void UpdateHull(float DeltaSeconds);

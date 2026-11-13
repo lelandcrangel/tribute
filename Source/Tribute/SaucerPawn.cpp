@@ -1,5 +1,7 @@
 #include "SaucerPawn.h"
 
+#include "Tribute.h"
+
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/SpotLightComponent.h"
@@ -159,8 +161,8 @@ void ASaucerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	if (UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ASaucerPawn::Move);
-		Input->BindAction(BeamAction, ETriggerEvent::Started, this, &ASaucerPawn::BeamPressed);
-		Input->BindAction(BeamAction, ETriggerEvent::Completed, this, &ASaucerPawn::BeamReleased);
+		Input->BindAction(BeamAction, ETriggerEvent::Started, this, &ASaucerPawn::StartBeam);
+		Input->BindAction(BeamAction, ETriggerEvent::Completed, this, &ASaucerPawn::StopBeam);
 	}
 }
 
@@ -171,14 +173,14 @@ void ASaucerPawn::Move(const FInputActionValue& Value)
 	AddMovementInput(FVector::RightVector, Direction.X);
 }
 
-void ASaucerPawn::BeamPressed()
+void ASaucerPawn::StartBeam()
 {
 	bBeamHeld = true;
 	BeamHeldTime = 0.f;
 	BeamStarted();
 }
 
-void ASaucerPawn::BeamReleased()
+void ASaucerPawn::StopBeam()
 {
 	if (!bBeamHeld)
 	{
@@ -193,6 +195,7 @@ void ASaucerPawn::BeamReleased()
 	{
 		PulseFlashLeft = PulseFlashTime;
 		const FVector GroundPoint = GetBeamGroundPoint();
+		UE_LOG(LogTribute, Log, TEXT("Beam pulse at %s"), *GroundPoint.ToCompactString());
 		OnBeamPulsed.Broadcast(GroundPoint);
 		BeamPulsed(GroundPoint);
 	}
@@ -228,15 +231,19 @@ void ASaucerPawn::UpdateHover(float DeltaSeconds)
 {
 	const FVector Location = GetActorLocation();
 
-	// Look for the ground (terrain, roads, buildings) straight below; cows and people don't count.
+	// Look for the ground (terrain, roads, buildings) straight below. Movable scenery counts too
+	// (WorldDynamic), but cows and people (Pawn) and props (PhysicsBody) don't.
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(SaucerHover), false, this);
 	if (LiftTarget.IsValid())
 	{
 		Params.AddIgnoredActor(LiftTarget->GetOwner());
 	}
+	FCollisionObjectQueryParams GroundTypes;
+	GroundTypes.AddObjectTypesToQuery(ECC_WorldStatic);
+	GroundTypes.AddObjectTypesToQuery(ECC_WorldDynamic);
 	FHitResult Hit;
 	const FVector End = Location - FVector(0.f, 0.f, HoverHeight * 4.f);
-	if (GetWorld()->LineTraceSingleByObjectType(Hit, Location, End, FCollisionObjectQueryParams(ECC_WorldStatic), Params))
+	if (GetWorld()->LineTraceSingleByObjectType(Hit, Location, End, GroundTypes, Params))
 	{
 		GroundZ = Hit.ImpactPoint.Z;
 		bHasGround = true;
@@ -386,6 +393,7 @@ void ASaucerPawn::TakeAboard()
 	}
 
 	const ETargetKind Kind = Liftable->Kind;
+	UE_LOG(LogTribute, Log, TEXT("Took %s aboard (%s)"), *Target->GetName(), *UEnum::GetValueAsString(Kind));
 	Liftable->CompleteLift(this);
 	OnTargetLifted.Broadcast(Target, Kind);
 	TakenAboard(Target, Kind);
