@@ -134,7 +134,8 @@ disqualified, so the gap is a buffer, not spare time.
   - [ ] Clone `github.com/lelandcrangel/tribute`, open `Tribute.uproject`, let it build the C++ and
         compile shaders
   - [ ] Editor Preferences > Model Context Protocol: turn Auto Start Server on (it's per machine and off
-        by default in 5.8), then start `claude` in the project folder and check `/mcp`
+        by default in 5.8), then start a new Claude Code session on the project folder, approve
+        `unreal-mcp`, and spawn a test cube
   - [ ] Package the empty project for Win64 (see Packaging) and run it from a clean folder
 - [x] Claude Code and the Unreal MCP working beside the editor
 - [ ] Dev log entry 1: the cut, and why it's coming back
