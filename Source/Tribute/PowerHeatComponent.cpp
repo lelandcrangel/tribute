@@ -55,6 +55,12 @@ float UPowerHeatComponent::Step(float DeltaSeconds, const FPowerHeatInputs& Inpu
 		HeatRate += DrawHeat * (Drawn / FullDraw);
 	}
 
+	// Being lit by the police keeps the town looking, so it can't be waited out under a spotlight.
+	if (Inputs.bInSpotlight)
+	{
+		HeatRate += SpotlightHeat;
+	}
+
 	if (HeatRate > 0.f)
 	{
 		Heat += HeatRate * DeltaSeconds;

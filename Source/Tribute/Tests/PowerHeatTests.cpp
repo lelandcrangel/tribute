@@ -177,6 +177,21 @@ bool FPowerHeatLieLowTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatSpotlightTest, "Tribute.PowerHeat.SpotlightAddsHeatAndStopsLyingLow", Flags)
+bool FPowerHeatSpotlightTest::RunTest(const FString& Parameters)
+{
+	UPowerHeatComponent* Meters = MakeMeters();
+	FPowerHeatInputs Lit;
+	Lit.bInSpotlight = true;
+	Run(Meters, 4.f, Lit);
+	TestEqual(TEXT("A spotlight adds SpotlightHeat a second, beam or no beam"), Meters->GetHeat(), 4.f * Meters->SpotlightHeat, 0.01f);
+
+	Run(Meters, 10.f, Lit);
+	const float StillLit = Meters->GetHeat();
+	TestTrue(TEXT("Under a spotlight, Heat never starts to fall"), StillLit > 4.f * Meters->SpotlightHeat);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatEmptyTest, "Tribute.PowerHeat.ZeroPowerBringsTheSaucerDown", Flags)
 bool FPowerHeatEmptyTest::RunTest(const FString& Parameters)
 {

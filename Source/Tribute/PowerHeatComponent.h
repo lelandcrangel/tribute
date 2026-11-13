@@ -1,7 +1,7 @@
 // The saucer's two meters. Power drains while it hovers and faster while the beam is on; it refills over a
 // transformer. Heat is how much the town has noticed: it climbs while the beam is on (faster when the beam
 // holds a person) and while the saucer draws from a transformer, and falls once the saucer has lain low for
-// a few seconds. Heat brings the police at 45% and the helicopter at 80%.
+// a few seconds out of any spotlight. Heat brings the police at 45% and the helicopter at 80%.
 //
 // The saucer calls Step() every frame with what it's doing; nothing here reads the world, so the rules can
 // be tested on their own (see Tests/PowerHeatTests.cpp).
@@ -41,6 +41,10 @@ struct FPowerHeatInputs
 	/** The saucer is over a transformer that still has charge. */
 	UPROPERTY(BlueprintReadWrite, Category = "Power and Heat")
 	bool bDrawingPower = false;
+
+	/** A responder's spotlight is on the saucer. */
+	UPROPERTY(BlueprintReadWrite, Category = "Power and Heat")
+	bool bInSpotlight = false;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHeatLevelChanged, EHeatLevel, NewLevel);
@@ -91,7 +95,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Heat")
 	float DrawHeat = 3.f;
 
-	/** Seconds with no beam and no drawing before Heat starts to fall. */
+	/** Heat per second while a responder's spotlight is on the saucer. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Heat")
+	float SpotlightHeat = 3.f;
+
+	/** Seconds with no beam, no drawing and no spotlight before Heat starts to fall. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Heat")
 	float LieLowDelay = 4.f;
 

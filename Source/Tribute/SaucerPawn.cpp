@@ -23,6 +23,7 @@
 #include "InputModifiers.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "PowerHeatComponent.h"
+#include "Responder.h"
 #include "TargetCharacter.h"
 #include "Transformer.h"
 #include "UObject/ConstructorHelpers.h"
@@ -494,6 +495,14 @@ void ASaucerPawn::UpdatePowerHeat(float DeltaSeconds)
 	Inputs.bBeamOn = bBeamHeld;
 	Inputs.bLiftingPerson = Lifted && Lifted->Kind == ETargetKind::Person;
 	Inputs.bDrawingPower = Feeder != nullptr;
+	for (TActorIterator<AResponder> It(GetWorld()); It; ++It)
+	{
+		if (It->IsLighting(this))
+		{
+			Inputs.bInSpotlight = true;
+			break;
+		}
+	}
 
 	const float Drawn = PowerHeat->Step(DeltaSeconds, Inputs);
 	if (Feeder && Drawn > 0.f)
@@ -508,9 +517,9 @@ void ASaucerPawn::UpdatePowerHeat(float DeltaSeconds)
 		static const TCHAR* LevelNames[] = { TEXT("calm"), TEXT("police"), TEXT("helicopter") };
 		// Same key every frame, so each message replaces the last; it lasts a moment past the frame so it never blinks.
 		GEngine->AddOnScreenDebugMessage(static_cast<uint64>(GetUniqueID()), 0.25f, FColor::White,
-			FString::Printf(TEXT("Power %3.0f   Heat %3.0f (%s)%s%s"), PowerHeat->GetPower(), PowerHeat->GetHeat(),
+			FString::Printf(TEXT("Power %3.0f   Heat %3.0f (%s)%s%s%s"), PowerHeat->GetPower(), PowerHeat->GetHeat(),
 				LevelNames[static_cast<int32>(PowerHeat->GetHeatLevel())], Feeder ? TEXT("   drawing power") : TEXT(""),
-				bDown ? TEXT("   SAUCER DOWN") : TEXT("")));
+				Inputs.bInSpotlight ? TEXT("   IN THE SPOTLIGHT") : TEXT(""), bDown ? TEXT("   SAUCER DOWN") : TEXT("")));
 	}
 #endif
 }
