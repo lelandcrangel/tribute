@@ -1,18 +1,23 @@
 #include "TributeGameMode.h"
 
+#include "Components/LightComponent.h"
+#include "Engine/DirectionalLight.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
+#include "Mothership.h"
 #include "Responder.h"
 #include "SaucerPawn.h"
+#include "TimerManager.h"
+#include "Transformer.h"
 #include "Tribute.h"
-#include "TributeGameState.h"
 #include "TributeHUD.h"
 
 ATributeGameMode::ATributeGameMode()
 {
-	// BP_Saucer and BP_PoliceCar replace these once they exist, through a GameMode Blueprint.
+	// BP_Saucer, BP_PoliceCar and BP_Mothership replace these once they exist, through a GameMode Blueprint.
 	DefaultPawnClass = ASaucerPawn::StaticClass();
 	PoliceCarClass = APoliceCar::StaticClass();
+	MothershipClass = AMothership::StaticClass();
 	GameStateClass = ATributeGameState::StaticClass();
 	HUDClass = ATributeHUD::StaticClass();
 }
@@ -21,11 +26,18 @@ void ATributeGameMode::HandleStartingNewPlayer_Implementation(APlayerController*
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 
-	// The saucer exists now: count what it takes, and listen to its Heat to send responders in and call them off.
-	if (ASaucerPawn* Saucer = NewPlayer ? Cast<ASaucerPawn>(NewPlayer->GetPawn()) : nullptr)
+	// The saucer exists now: count what it takes, send responders by its Heat, and watch its Power.
+	if (ASaucerPawn* NewSaucer = NewPlayer ? Cast<ASaucerPawn>(NewPlayer->GetPawn()) : nullptr)
 	{
-		Saucer->PowerHeat->OnHeatLevelChanged.AddDynamic(this, &ATributeGameMode::HandleHeatLevelChanged);
-		Saucer->OnTargetLifted.AddDynamic(this, &ATributeGameMode::HandleTargetLifted);
+		Saucer = NewSaucer;
+		NewSaucer->PowerHeat->OnHeatLevelChanged.AddDynamic(this, &ATributeGameMode::HandleHeatLevelChanged);
+		NewSaucer->PowerHeat->OnPowerEmpty.AddDynamic(this, &ATributeGameMode::HandlePowerEmpty);
+		NewSaucer->OnTargetLifted.AddDynamic(this, &ATributeGameMode::HandleTargetLifted);
+		NewSaucer->OnDocked.AddDynamic(this, &ATributeGameMode::HandleDocked);
+	}
+	if (ATributeGameState* State = GetGameState<ATributeGameState>())
+	{
+		State->OnShipArrived.AddUniqueDynamic(this, &ATributeGameMode::HandleShipArrived);
 	}
 }
 
@@ -39,6 +51,12 @@ void ATributeGameMode::HandleTargetLifted(AActor* Target, ETargetKind Kind)
 
 void ATributeGameMode::HandleHeatLevelChanged(EHeatLevel NewLevel)
 {
+	// Once the ship is here, the town has other things to look at.
+	if (bShipArrived)
+	{
+		return;
+	}
+
 	// One police car at a time: it comes at the police level, stays through the helicopter, and goes when
 	// the town calms down. If Heat climbs again after it's been called off, a new one comes.
 	if (NewLevel != EHeatLevel::Calm)
@@ -57,6 +75,118 @@ void ATributeGameMode::HandleHeatLevelChanged(EHeatLevel NewLevel)
 	}
 }
 
+void ATributeGameMode::HandleShipArrived()
+{
+	if (bShipArrived || bRunOver)
+	{
+		return;
+	}
+	bShipArrived = true;
+
+	// The police scatter.
+	for (TActorIterator<AResponder> It(GetWorld()); It; ++It)
+	{
+		It->Leave();
+	}
+	// The valley's lights die, and the moon goes behind the ship.
+	for (TActorIterator<ATransformer> It(GetWorld()); It; ++It)
+	{
+		It->PowerDown();
+	}
+	for (TActorIterator<ADirectionalLight> It(GetWorld()); It; ++It)
+	{
+		if (ULightComponent* Moon = It->GetLightComponent())
+		{
+			Moon->SetIntensity(Moon->Intensity * 0.15f);
+		}
+	}
+
+	// The ship: the one placed in the level, or a new one over the valley's centre.
+	if (TActorIterator<AMothership> Placed(GetWorld()); Placed)
+	{
+		Mothership = *Placed;
+	}
+	if (!Mothership.IsValid() && MothershipClass)
+	{
+		Mothership = GetWorld()->SpawnActor<AMothership>(MothershipClass, FTransform(FVector::ZeroVector));
+	}
+	if (Mothership.IsValid())
+	{
+		Mothership->OnTributeEnded.AddUniqueDynamic(this, &ATributeGameMode::HandleTributeEnded);
+		Mothership->BeginArrival(Saucer.Get());
+	}
+}
+
+void ATributeGameMode::HandleTributeEnded(bool bPassed)
+{
+	if (bRunOver)
+	{
+		return;
+	}
+	if (bPassed && Saucer.IsValid() && Mothership.IsValid())
+	{
+		// The debrief waits for the saucer to be aboard.
+		Saucer->BeginDocking(Mothership->GetDockPoint());
+		return;
+	}
+	if (Mothership.IsValid())
+	{
+		Mothership->Depart();
+	}
+	EndRun(ERunEnding::LeftBehind);
+}
+
+void ATributeGameMode::HandleDocked()
+{
+	EndRun(ERunEnding::Docked);
+}
+
+void ATributeGameMode::HandlePowerEmpty()
+{
+	EndRun(ERunEnding::SaucerDown);
+}
+
+void ATributeGameMode::EndRun(ERunEnding Ending)
+{
+	if (bRunOver)
+	{
+		return;
+	}
+	bRunOver = true;
+
+	ATributeGameState* State = GetGameState<ATributeGameState>();
+	FRunResult Result;
+	Result.Ending = Ending;
+	if (State)
+	{
+		Result.Manifest = State->Manifest;
+	}
+	if (Mothership.IsValid())
+	{
+		Result.NotesRight = Mothership->Run.NotesRight;
+		Result.Misses = Mothership->Run.Misses;
+	}
+	if (Saucer.IsValid())
+	{
+		Result.Heat = Saucer->PowerHeat->GetHeat();
+	}
+	Result.Score = FRunResult::ScoreFor(Ending, Result.Manifest, Result.NotesRight, Result.Misses, Result.Heat);
+	UE_LOG(LogTribute, Log, TEXT("The night is over: %s, score %d"), *UEnum::GetValueAsString(Ending), Result.Score);
+
+	// A moment to watch the ending before the debrief comes up.
+	FTimerHandle Timer;
+	GetWorldTimerManager().SetTimer(Timer, FTimerDelegate::CreateWeakLambda(this, [this, Result]()
+	{
+		if (APlayerController* Player = GetWorld()->GetFirstPlayerController())
+		{
+			if (ATributeHUD* HUD = Player->GetHUD<ATributeHUD>())
+			{
+				HUD->ShowDebrief(Result);
+			}
+		}
+	}), DebriefDelay, false);
+}
+
 FTransform ATributeGameMode::FindPoliceStart() const
 {
 	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
@@ -69,7 +199,6 @@ FTransform ATributeGameMode::FindPoliceStart() const
 
 	// No marked start: come from 100 m down the valley, so it's never on top of the saucer.
 	UE_LOG(LogTribute, Warning, TEXT("No actor tagged %s; the police start 100 m from the saucer"), *PoliceStartTag.ToString());
-	const APawn* Saucer = GetWorld()->GetFirstPlayerController() ? GetWorld()->GetFirstPlayerController()->GetPawn() : nullptr;
-	const FVector From = Saucer ? Saucer->GetActorLocation() : FVector::ZeroVector;
+	const FVector From = Saucer.IsValid() ? Saucer->GetActorLocation() : FVector::ZeroVector;
 	return FTransform(FVector(From.X - 10000.f, From.Y, 100.f));
 }

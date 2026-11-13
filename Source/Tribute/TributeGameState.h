@@ -13,6 +13,51 @@ class UDataTable;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnManifestCounted, ETargetKind, Kind, bool, bFilledLine);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShipArrived);
 
+/** How the night ended. */
+UENUM(BlueprintType)
+enum class ERunEnding : uint8
+{
+	Docked,     // the tribute was answered and the saucer rode up into the hull
+	LeftBehind, // three missed calls: the ship left without it
+	SaucerDown, // Power ran out
+};
+
+/** The debrief's numbers. */
+USTRUCT(BlueprintType)
+struct TRIBUTE_API FRunResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Debrief")
+	ERunEnding Ending = ERunEnding::SaucerDown;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Debrief")
+	FManifest Manifest;
+
+	/** Notes answered right, and calls missed, in the tribute (0 and 0 if it never got there). */
+	UPROPERTY(BlueprintReadOnly, Category = "Debrief")
+	int32 NotesRight = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Debrief")
+	int32 Misses = 0;
+
+	/** Heat when the night ended: how stirred up the town was left. */
+	UPROPERTY(BlueprintReadOnly, Category = "Debrief")
+	float Heat = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Debrief")
+	int32 Score = 0;
+
+	/** The tribute's accuracy, 0 to 1: right notes over right notes plus misses. */
+	float Accuracy() const { return (NotesRight + Misses) > 0 ? static_cast<float>(NotesRight) / (NotesRight + Misses) : 0.f; }
+
+	/**
+	 * The score: up to 1000 for the manifest, 250 for the named object, up to 500 for the tribute's accuracy,
+	 * 500 for docking, less 2 a point of Heat left behind. Never below zero.
+	 */
+	static int32 ScoreFor(ERunEnding Ending, const FManifest& Manifest, int32 NotesRight, int32 Misses, float Heat);
+};
+
 UCLASS()
 class TRIBUTE_API ATributeGameState : public AGameStateBase
 {
@@ -37,6 +82,10 @@ public:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Manifest")
 	FRaidClock Clock;
+
+	/** For testing: brings the ship in now (`ke * SkipToArrival` in the console). */
+	UFUNCTION(BlueprintCallable, Category = "Manifest")
+	void SkipToArrival() { Clock.SecondsLeft = FMath::Min(Clock.SecondsLeft, 1.f); }
 
 	/** Counts one thing taken aboard against the manifest. */
 	UFUNCTION(BlueprintCallable, Category = "Manifest")

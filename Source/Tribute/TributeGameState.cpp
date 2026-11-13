@@ -47,6 +47,19 @@ void ATributeGameState::Tick(float DeltaSeconds)
 	}
 }
 
+int32 FRunResult::ScoreFor(ERunEnding Ending, const FManifest& Manifest, int32 NotesRight, int32 Misses, float Heat)
+{
+	FRunResult Result;
+	Result.NotesRight = NotesRight;
+	Result.Misses = Misses;
+	float Score = 1000.f * Manifest.FillFraction();
+	Score += Manifest.IsLineFilled(ETargetKind::NamedObject) && Manifest.NamedWanted > 0 ? 250.f : 0.f;
+	Score += 500.f * Result.Accuracy();
+	Score += Ending == ERunEnding::Docked ? 500.f : 0.f;
+	Score -= 2.f * Heat;
+	return FMath::Max(FMath::RoundToInt(Score), 0);
+}
+
 void ATributeGameState::CountTakenAboard(ETargetKind Kind)
 {
 	const bool bFilledLine = Manifest.Count(Kind);

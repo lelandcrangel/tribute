@@ -10,12 +10,14 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/HUD.h"
 #include "LiftableComponent.h"
+#include "TributeGameState.h"
 #include "TributeHUD.generated.h"
 
 class UProgressBar;
 class UTextBlock;
 class UVerticalBox;
 class UPanelWidget;
+class AMothership;
 
 UCLASS()
 class TRIBUTE_API UTributeHUDWidget : public UUserWidget
@@ -66,6 +68,12 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> ClockText;
 
+	/** Under the clock once the ship is down: the round, the misses, and whether to listen or answer. */
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> TributeText;
+
+	TWeakObjectPtr<AMothership> Mothership;
+
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> CowsLine;
 
@@ -78,6 +86,29 @@ private:
 	/** Seconds left on each line's flash, by ETargetKind. */
 	float FlashLeft[3] = { 0.f, 0.f, 0.f };
 	bool bBoundToGameState = false;
+};
+
+/** The end of the night: how it ended, the manifest, the tribute, the Heat left behind, and the score. */
+UCLASS()
+class TRIBUTE_API UTributeDebriefWidget : public UUserWidget
+{
+	GENERATED_BODY()
+
+public:
+	/** Fills the debrief in. Call once, before it's added to the screen. */
+	void SetResult(const FRunResult& InResult);
+
+protected:
+	virtual void NativeOnInitialized() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+
+private:
+	UTextBlock* AddLine(class UVerticalBox* Box, const FString& Text, int32 Size, const FLinearColor& Colour, float Gap);
+
+	FRunResult Result;
+	/** Seconds before a key starts a new night, so a held beam doesn't skip the debrief. */
+	float ReadyIn = 1.5f;
 };
 
 UCLASS()
@@ -95,10 +126,16 @@ public:
 	UFUNCTION(BlueprintPure, Category = "HUD")
 	UTributeHUDWidget* GetHUDWidget() const { return HUDWidget; }
 
+	/** Hides the raid HUD and puts the debrief up, taking keyboard and pad focus. */
+	void ShowDebrief(const FRunResult& Result);
+
 protected:
 	virtual void BeginPlay() override;
 
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<UTributeHUDWidget> HUDWidget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTributeDebriefWidget> DebriefWidget;
 };

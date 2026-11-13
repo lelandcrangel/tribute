@@ -218,7 +218,7 @@ void ASaucerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void ASaucerPawn::Move(const FInputActionValue& Value)
 {
-	if (bDown)
+	if (bDown || bDocking)
 	{
 		return;
 	}
@@ -229,7 +229,7 @@ void ASaucerPawn::Move(const FInputActionValue& Value)
 
 void ASaucerPawn::StartBeam()
 {
-	if (bDown)
+	if (bDown || bDocking)
 	{
 		return;
 	}
@@ -291,6 +291,28 @@ void ASaucerPawn::UpdateHover(float DeltaSeconds)
 {
 	const FVector Location = GetActorLocation();
 
+	// Docking: drift under the dock and climb into the hull; the valley falls away below.
+	if (bDocking)
+	{
+		if (bDocked)
+		{
+			return;
+		}
+		FVector NewLocation = Location;
+		NewLocation.X = FMath::FInterpTo(Location.X, DockTarget.X, DeltaSeconds, 1.5f);
+		NewLocation.Y = FMath::FInterpTo(Location.Y, DockTarget.Y, DeltaSeconds, 1.5f);
+		NewLocation.Z = FMath::Min(Location.Z + DockClimbSpeed * DeltaSeconds, DockTarget.Z);
+		SetActorLocation(NewLocation);
+		if (FVector::Dist(NewLocation, DockTarget) < 300.f)
+		{
+			bDocked = true;
+			SetActorHiddenInGame(true);
+			UE_LOG(LogTribute, Log, TEXT("The saucer is aboard"));
+			OnDocked.Broadcast();
+		}
+		return;
+	}
+
 	// Look for the ground (terrain, roads, buildings) straight below. Movable scenery counts too
 	// (WorldDynamic), but cows and people (Pawn) and props (PhysicsBody) don't.
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(SaucerHover), false, this);
@@ -331,7 +353,7 @@ void ASaucerPawn::UpdateHover(float DeltaSeconds)
 void ASaucerPawn::UpdateHull(float DeltaSeconds)
 {
 	HoverTime += DeltaSeconds;
-	HullYaw = FMath::Fmod(HullYaw + HullSpinRate * DeltaSeconds, 360.f);
+	HullYaw = FMath::Fmod(HullYaw + HullSpinRate * (bDocking ? 6.f : 1.f) * DeltaSeconds, 360.f);
 
 	// Lean toward where it's going: nose down going forward, a side down going sideways.
 	const FVector Velocity = GetVelocity();
@@ -491,7 +513,7 @@ void ASaucerPawn::UpdatePowerHeat(float DeltaSeconds)
 	const ULiftableComponent* Lifted = LiftTarget.Get();
 
 	FPowerHeatInputs Inputs;
-	Inputs.bHovering = !bDown;
+	Inputs.bHovering = !bDown && !bDocking;
 	Inputs.bBeamOn = bBeamHeld;
 	Inputs.bLiftingPerson = Lifted && Lifted->Kind == ETargetKind::Person;
 	Inputs.bDrawingPower = Feeder != nullptr;
@@ -539,6 +561,20 @@ void ASaucerPawn::UpdateRim()
 	RimTint->SetVectorParameterValue(TEXT("Color"), Colour);
 	RimGlow->SetLightColor(Colour);
 	RimGlow->SetVisibility(!bDown);
+}
+
+void ASaucerPawn::BeginDocking(FVector DockPoint)
+{
+	if (bDocking || bDown)
+	{
+		return;
+	}
+	StopBeam();
+	bDocking = true;
+	DockTarget = DockPoint;
+	// Nothing should stop the climb: no collision on the way up.
+	SetActorEnableCollision(false);
+	UE_LOG(LogTribute, Log, TEXT("Docking: climbing into the hull"));
 }
 
 void ASaucerPawn::HandlePowerEmpty()

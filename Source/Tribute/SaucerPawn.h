@@ -28,6 +28,7 @@ struct FInputActionValue;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTargetLifted, AActor*, Target, ETargetKind, Kind);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeamPulsed, FVector, GroundPoint);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSaucerDocked);
 
 UCLASS()
 class TRIBUTE_API ASaucerPawn : public APawn
@@ -222,6 +223,18 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Saucer", meta = (DisplayName = "Power Failed"))
 	void PowerFailed();
 
+	/** The tribute was answered: rise into the mothership's hull at DockPoint. The player has no control from here. */
+	UFUNCTION(BlueprintCallable, Category = "Saucer")
+	void BeginDocking(FVector DockPoint);
+
+	/** The saucer is inside the hull. The debrief comes up on this. */
+	UPROPERTY(BlueprintAssignable, Category = "Saucer")
+	FOnSaucerDocked OnDocked;
+
+	/** How fast it climbs into the hull, in cm per second. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Hover")
+	float DockClimbSpeed = 700.f;
+
 	/** True once Power has run out and the saucer is on the ground. */
 	UFUNCTION(BlueprintPure, Category = "Saucer")
 	bool IsDown() const { return bDown; }
@@ -272,4 +285,7 @@ private:
 	TObjectPtr<UMaterialInterface> RimMaterial;
 
 	bool bDown = false;
+	bool bDocking = false;
+	bool bDocked = false;
+	FVector DockTarget = FVector::ZeroVector;
 };

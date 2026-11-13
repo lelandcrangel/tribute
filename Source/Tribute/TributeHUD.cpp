@@ -11,6 +11,10 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Kismet/GameplayStatics.h"
+#include "Mothership.h"
 #include "PowerHeatComponent.h"
 #include "SaucerPawn.h"
 #include "TributeGameState.h"
@@ -92,6 +96,13 @@ void UTributeHUDWidget::NativeOnInitialized()
 	ClockSlot->SetPosition(FVector2D(0.f, 28.f));
 	ClockSlot->SetAutoSize(true);
 
+	TributeText = MakeText(TEXT(""), 15);
+	UCanvasPanelSlot* TributeSlot = Root->AddChildToCanvas(TributeText);
+	TributeSlot->SetAnchors(FAnchors(0.5f, 0.f));
+	TributeSlot->SetAlignment(FVector2D(0.5f, 0.f));
+	TributeSlot->SetPosition(FVector2D(0.f, 62.f));
+	TributeSlot->SetAutoSize(true);
+
 	// Top right: the manifest.
 	UVerticalBox* Lines = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
 	UCanvasPanelSlot* LinesSlot = Root->AddChildToCanvas(Lines);
@@ -150,6 +161,26 @@ void UTributeHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 		ClockText->SetText(FText::FromString(State->Clock.bArrived
 			? TEXT("THE SHIP IS HERE") : FString::Printf(TEXT("SHIP IN %s"), *State->Clock.ToMinutesSeconds())));
 	}
+	if (TributeText)
+	{
+		if (!Mothership.IsValid())
+		{
+			if (TActorIterator<AMothership> Found(GetWorld()); Found)
+			{
+				Mothership = *Found;
+			}
+		}
+		FString Line;
+		if (Mothership.IsValid() && Mothership->IsDown())
+		{
+			const FTributeRun& Run = Mothership->Run;
+			const TCHAR* Doing = Run.Phase == ETributePhase::Catch ? TEXT("LISTEN")
+				: Run.Phase == ETributePhase::Pulse ? TEXT("ANSWER") : TEXT("");
+			Line = FString::Printf(TEXT("ROUND %d OF %d     MISSES %d / %d     %s"), FMath::Min(Run.Round + 1, 3), 3,
+				Run.Misses, Run.MissesAllowed, Doing);
+		}
+		TributeText->SetText(FText::FromString(Line));
+	}
 	UpdateLine(ETargetKind::Cow, CowsLine, InDeltaTime);
 	UpdateLine(ETargetKind::Person, PeopleLine, InDeltaTime);
 	UpdateLine(ETargetKind::NamedObject, NamedLine, InDeltaTime);
@@ -203,11 +234,130 @@ void UTributeHUDWidget::HandleManifestCounted(ETargetKind Kind, bool bFilledLine
 	}
 }
 
+// --- The debrief ---
+
+UTextBlock* UTributeDebriefWidget::AddLine(UVerticalBox* Box, const FString& Text, int32 Size, const FLinearColor& Colour, float Gap)
+{
+	UTextBlock* Block = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+	Block->SetText(FText::FromString(Text));
+	FSlateFontInfo Font = Block->GetFont();
+	Font.Size = Size;
+	Block->SetFont(Font);
+	Block->SetColorAndOpacity(FSlateColor(Colour));
+	Block->SetShadowOffset(FVector2D(1.5f, 1.5f));
+	Block->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, 0.9f));
+	UVerticalBoxSlot* LineSlot = Box->AddChildToVerticalBox(Block);
+	LineSlot->SetHorizontalAlignment(HAlign_Center);
+	LineSlot->SetPadding(FMargin(0.f, Gap, 0.f, 0.f));
+	return Block;
+}
+
+void UTributeDebriefWidget::SetResult(const FRunResult& InResult)
+{
+	Result = InResult;
+}
+
+void UTributeDebriefWidget::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
+	SetIsFocusable(true);
+}
+
+void UTributeDebriefWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+	ReadyIn -= InDeltaTime;
+
+	// Built on the first tick, once the result is set.
+	if (!WidgetTree || WidgetTree->RootWidget)
+	{
+		return;
+	}
+	UCanvasPanel* Root = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("Root"));
+	WidgetTree->RootWidget = Root;
+	UVerticalBox* Box = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+	UCanvasPanelSlot* BoxSlot = Root->AddChildToCanvas(Box);
+	BoxSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+	BoxSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+	BoxSlot->SetAutoSize(true);
+
+	const FLinearColor White(1.f, 1.f, 1.f);
+	const FLinearColor Grey(0.7f, 0.7f, 0.75f);
+	FString Title;
+	FString Line;
+	FLinearColor TitleColour = White;
+	switch (Result.Ending)
+	{
+	case ERunEnding::Docked:
+		Title = TEXT("TRIBUTE ACCEPTED");
+		Line = TEXT("The saucer rode up into the hull.");
+		TitleColour = FLinearColor(0.45f, 1.f, 0.6f);
+		break;
+	case ERunEnding::LeftBehind:
+		Title = TEXT("LEFT BEHIND");
+		Line = TEXT("Three calls went unanswered. The ship went without you.");
+		TitleColour = FLinearColor(1.f, 0.45f, 0.3f);
+		break;
+	case ERunEnding::SaucerDown:
+		Title = TEXT("SAUCER DOWN");
+		Line = TEXT("The power ran out in a field.");
+		TitleColour = FLinearColor(1.f, 0.6f, 0.2f);
+		break;
+	}
+	AddLine(Box, Title, 40, TitleColour, 0.f);
+	AddLine(Box, Line, 16, Grey, 6.f);
+
+	const FManifest& M = Result.Manifest;
+	AddLine(Box, FString::Printf(TEXT("Manifest  %.0f%%     cows %d/%d   people %d/%d   %s %d/%d"), M.FillFraction() * 100.f,
+		M.CowsTaken, M.CowsWanted, M.PeopleTaken, M.PeopleWanted, *M.NamedObjectName.ToString().ToLower(), M.NamedTaken, M.NamedWanted), 18, White, 28.f);
+	AddLine(Box, M.IsLineFilled(ETargetKind::NamedObject) && M.NamedWanted > 0 ? FString::Printf(TEXT("%s: taken (+250)"), *M.NamedObjectName.ToString())
+		: FString::Printf(TEXT("%s: not taken"), *M.NamedObjectName.ToString()), 16, Grey, 6.f);
+	AddLine(Box, (Result.NotesRight + Result.Misses) > 0
+		? FString::Printf(TEXT("Tribute  %.0f%% accurate     %d notes right, %d calls missed"), Result.Accuracy() * 100.f, Result.NotesRight, Result.Misses)
+		: FString(TEXT("Tribute  not reached")), 18, White, 10.f);
+	AddLine(Box, FString::Printf(TEXT("Heat left behind  %.0f"), Result.Heat), 18, White, 10.f);
+	AddLine(Box, FString::Printf(TEXT("SCORE  %d"), Result.Score), 30, FLinearColor(1.f, 0.95f, 0.5f), 28.f);
+	AddLine(Box, TEXT("Space or A to fly again"), 15, Grey, 30.f);
+}
+
+FReply UTributeDebriefWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	const FKey Key = InKeyEvent.GetKey();
+	if (ReadyIn <= 0.f && (Key == EKeys::SpaceBar || Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom))
+	{
+		// A new night: reload the level from the start.
+		UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this)));
+		return FReply::Handled();
+	}
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
 // --- The HUD actor ---
 
 ATributeHUD::ATributeHUD()
 {
 	HUDWidgetClass = UTributeHUDWidget::StaticClass();
+}
+
+void ATributeHUD::ShowDebrief(const FRunResult& Result)
+{
+	APlayerController* Player = GetOwningPlayerController();
+	if (!Player || DebriefWidget)
+	{
+		return;
+	}
+	if (HUDWidget)
+	{
+		HUDWidget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	DebriefWidget = CreateWidget<UTributeDebriefWidget>(Player, UTributeDebriefWidget::StaticClass());
+	DebriefWidget->SetResult(Result);
+	DebriefWidget->AddToViewport(10);
+
+	// The debrief takes the keys and the pad, so Space or A starts a new night.
+	FInputModeUIOnly Mode;
+	Mode.SetWidgetToFocus(DebriefWidget->TakeWidget());
+	Player->SetInputMode(Mode);
 }
 
 void ATributeHUD::BeginPlay()

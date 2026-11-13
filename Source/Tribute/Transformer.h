@@ -59,6 +59,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Transformer")
 	bool IsBlackedOut() const { return bBlackedOut; }
 
+	/** The ship's arrival kills every farm's lights, drawn from or not. */
+	UFUNCTION(BlueprintCallable, Category = "Transformer")
+	void PowerDown() { if (!bBlackedOut) { BlackOut(); } }
+
 	// --- Hooks for the Blueprint's sounds and effects ---
 
 	/** The farm just went dark: a thunk, the hum dying, dogs. */
