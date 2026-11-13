@@ -8,6 +8,35 @@ UPowerHeatComponent::UPowerHeatComponent()
 
 float UPowerHeatComponent::Step(float DeltaSeconds, const FPowerHeatInputs& Inputs)
 {
+	// --- Power: once it's empty the saucer is down, and nothing refills it ---
+	float Drawn = 0.f;
+	if (!bPowerEmpty)
+	{
+		float Drain = 0.f;
+		if (Inputs.bHovering)
+		{
+			Drain += HoverDrain;
+		}
+		if (Inputs.bBeamOn)
+		{
+			Drain += BeamDrain;
+		}
+		const float AfterDrain = Power - Drain * DeltaSeconds;
+
+		if (Inputs.bDrawingPower)
+		{
+			// Only take what fits in the tank, so a transformer isn't emptied into a full saucer.
+			Drawn = FMath::Clamp(RefillRate * DeltaSeconds, 0.f, FMath::Max(MaxPower - AfterDrain, 0.f));
+		}
+
+		Power = FMath::Clamp(AfterDrain + Drawn, 0.f, MaxPower);
+		if (Power <= 0.f)
+		{
+			bPowerEmpty = true;
+			OnPowerEmpty.Broadcast();
+		}
+	}
+
 	// --- Heat: anything that gets noticed resets the lie-low clock ---
 	float HeatRate = 0.f;
 	if (Inputs.bBeamOn)
@@ -18,9 +47,12 @@ float UPowerHeatComponent::Step(float DeltaSeconds, const FPowerHeatInputs& Inpu
 			HeatRate += PersonHeat;
 		}
 	}
-	if (Inputs.bDrawingPower && !bPowerEmpty)
+	// Drawing makes Heat in proportion to how hard the farm is being drained: hanging over a transformer
+	// with a full tank only tops up the hover drain, which nobody notices.
+	const float FullDraw = RefillRate * DeltaSeconds;
+	if (Drawn > 0.f && FullDraw > 0.f)
 	{
-		HeatRate += DrawHeat;
+		HeatRate += DrawHeat * (Drawn / FullDraw);
 	}
 
 	if (HeatRate > 0.f)
@@ -39,36 +71,6 @@ float UPowerHeatComponent::Step(float DeltaSeconds, const FPowerHeatInputs& Inpu
 	Heat = FMath::Clamp(Heat, 0.f, 100.f);
 	UpdateHeatLevel();
 
-	// --- Power: once it's empty the saucer is down, and nothing refills it ---
-	if (bPowerEmpty)
-	{
-		return 0.f;
-	}
-
-	float Drain = 0.f;
-	if (Inputs.bHovering)
-	{
-		Drain += HoverDrain;
-	}
-	if (Inputs.bBeamOn)
-	{
-		Drain += BeamDrain;
-	}
-	const float AfterDrain = Power - Drain * DeltaSeconds;
-
-	float Drawn = 0.f;
-	if (Inputs.bDrawingPower)
-	{
-		// Only take what fits in the tank, so a transformer isn't emptied into a full saucer.
-		Drawn = FMath::Clamp(RefillRate * DeltaSeconds, 0.f, FMath::Max(MaxPower - AfterDrain, 0.f));
-	}
-
-	Power = FMath::Clamp(AfterDrain + Drawn, 0.f, MaxPower);
-	if (Power <= 0.f)
-	{
-		bPowerEmpty = true;
-		OnPowerEmpty.Broadcast();
-	}
 	return Drawn;
 }
 

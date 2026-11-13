@@ -90,6 +90,23 @@ bool FPowerHeatRefillTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatFullTankTest, "Tribute.PowerHeat.FullTankOverTransformerMakesLittleHeat", Flags)
+bool FPowerHeatFullTankTest::RunTest(const FString& Parameters)
+{
+	UPowerHeatComponent* Draining = MakeMeters();
+	UPowerHeatComponent* Full = MakeMeters();
+	Run(Draining, 30.f, Beaming());
+	Run(Draining, 0.f, Hovering());
+	const float HeatBefore = Draining->GetHeat();
+	Run(Draining, 2.f, Drawing());
+	const float DrainingHeat = Draining->GetHeat() - HeatBefore;
+
+	Run(Full, 2.f, Drawing());
+	TestEqual(TEXT("Drawing at full rate adds DrawHeat a second"), DrainingHeat, 2.f * Draining->DrawHeat, 0.01f);
+	TestTrue(TEXT("Topping off a full tank adds almost none"), Full->GetHeat() < 0.1f * 2.f * Full->DrawHeat);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPowerHeatPersonHeatTest, "Tribute.PowerHeat.PeopleMakeMoreHeatThanCows", Flags)
 bool FPowerHeatPersonHeatTest::RunTest(const FString& Parameters)
 {

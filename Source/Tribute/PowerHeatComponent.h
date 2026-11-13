@@ -147,9 +147,16 @@ public:
 private:
 	void UpdateHeatLevel();
 
+	/** Shown in the Details panel during play, for tuning. */
+	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Power and Heat", meta = (AllowPrivateAccess = "true"))
 	float Power = 100.f;
+
+	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Power and Heat", meta = (AllowPrivateAccess = "true"))
 	float Heat = 0.f;
+
 	float QuietTime = 0.f;
+	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Power and Heat", meta = (AllowPrivateAccess = "true"))
 	EHeatLevel HeatLevel = EHeatLevel::Calm;
+
 	bool bPowerEmpty = false;
 };

@@ -99,8 +99,8 @@ ASaucerPawn::ASaucerPawn()
 	RimGlow->SetMobility(EComponentMobility::Movable);
 	RimGlow->SetRelativeLocation(FVector(0.f, 0.f, -60.f));
 	RimGlow->SetIntensityUnits(ELightUnits::Candelas);
-	RimGlow->SetIntensity(2000.f);
-	RimGlow->SetAttenuationRadius(1800.f);
+	RimGlow->SetIntensity(300.f);
+	RimGlow->SetAttenuationRadius(1400.f);
 	RimGlow->SetCastShadows(false);
 
 	PowerHeat = CreateDefaultSubobject<UPowerHeatComponent>(TEXT("PowerHeat"));
@@ -506,7 +506,8 @@ void ASaucerPawn::UpdatePowerHeat(float DeltaSeconds)
 	if (bShowDebugReadout && GEngine && IsPlayerControlled())
 	{
 		static const TCHAR* LevelNames[] = { TEXT("calm"), TEXT("police"), TEXT("helicopter") };
-		GEngine->AddOnScreenDebugMessage(static_cast<uint64>(GetUniqueID()), 0.f, FColor::White,
+		// Same key every frame, so each message replaces the last; it lasts a moment past the frame so it never blinks.
+		GEngine->AddOnScreenDebugMessage(static_cast<uint64>(GetUniqueID()), 0.25f, FColor::White,
 			FString::Printf(TEXT("Power %3.0f   Heat %3.0f (%s)%s%s"), PowerHeat->GetPower(), PowerHeat->GetHeat(),
 				LevelNames[static_cast<int32>(PowerHeat->GetHeatLevel())], Feeder ? TEXT("   drawing power") : TEXT(""),
 				bDown ? TEXT("   SAUCER DOWN") : TEXT("")));
