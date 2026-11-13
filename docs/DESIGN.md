@@ -161,9 +161,14 @@ disqualified, so the gap is a buffer, not spare time.
 
 **Saturday, Nov 14: the mothership**
 
-- [ ] Mothership mesh and arrival: clouds, scale, the valley going dark
-- [ ] The ring, the call player, and three tribute rounds
-- [ ] Dock, ascent, debrief, and the left-behind ending
+- [ ] Mothership mesh and arrival: clouds, scale, the valley going dark (*Nov 12, grey box: the dark
+      angular hull comes down over 14 s, watched from a camera at the valley's edge; police leave, farms
+      black out, the moon dims. No clouds yet, and no real mesh*)
+- [x] The ring, the call player, and three tribute rounds (*Nov 12: 8 sectors with pools on the ground,
+      calls of 3, 4 and 6 notes, the motif check with tests; played and answered end to end in the editor.
+      The tones are hooks waiting for MetaSounds*)
+- [x] Dock, ascent, debrief, and the left-behind ending (*Nov 12: docking, left behind and saucer down,
+      each with a debrief and a score; both tribute endings played through in the editor*)
 - [ ] Art pass on the valley: Fab assets, lighting, fog
 - [ ] Sound pass: every action, the tones, the mix
 - [ ] Package a build

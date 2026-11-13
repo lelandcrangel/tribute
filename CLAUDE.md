@@ -76,9 +76,9 @@ diff and review. The Blueprints keep the tuning, meshes and effects editable in 
 | Manifest and clock | `ATributeGameState` with `FManifest` and `FRaidClock` (`Manifest.h`), row `Default` in `Content/Tribute/Data/DT_Manifests` | 3 cows, 2 people, the scarecrow; the ship arrives at 7:00. The GameMode counts each lift; `OnShipArrived` fires when the clock runs out. Tests in `Tests/ManifestTests.cpp`. `/Game/Tribute/Data` is always cooked |
 | Run flow | `ATributeGameMode` | Raid → arrival → tribute → dock and ascent, or saucer down, or left behind. For now it spawns the saucer and sends the police in and home by Heat level |
 | Map | `Content/Tribute/Maps/Valley` | Grey box: the engine template, floor scaled to 500 m, a NavMesh over all of it, 14 cows, 6 people, six liftable boxes, two barns, three transformers, a `PoliceStart` point. Startup and game default map |
-| Mothership | `BP_Mothership` | 8 sectors on dynamic material instances (emissive colour and intensity) |
-| Tribute | `UTributeSequencer` (C++) | Spin, catch, pulse, stop, new colour. Reads `DT_Patterns` with a seed and runs the motif check |
-| Arrival and ascent | `LS_Arrival`, `LS_Ascent` | Level Sequences, started by the GameMode |
+| Mothership | `AMothership` (C++) → `BP_Mothership`, `M_SectorGlow` | Two dark 200 m slabs crossed at 45 degrees; one ring of 8 sector panels (unlit emissive `M_SectorGlow`, a `Color` parameter), each with a pool of light on the ground at 60 m from the centre. Placed above the valley's centre (`ValleyFloorZ` says where the floor is); comes down to 120 m over 14 s. `PlayTone`, `NoteAnswered`, `CallMissed` hooks wait for the MetaSounds |
+| Tribute | `FTributeRun`, `FTributeCalls`, `FTributeScale` (`TributeRules.h`) | Spin, catch, pulse, stop, new colour; rounds of 3, 4, 6; a pulse in the right pool answers, a wrong pool or 12 s is a miss, three misses and the ship leaves. Calls are seeded and refuse the motif shape. `DT_Patterns` isn't made: calls are generated. Tests in `Tests/TributeTests.cpp` |
+| Arrival and ascent | `ATributeGameMode` | No Level Sequences yet: the GameMode cuts to a fixed camera far out and low for the arrival and for the dock and ascent, and the saucer's camera pulls up wide for the tribute. Police leave, farms black out, the moon dims at arrival. Endings: docked, left behind, saucer down, each with the debrief (`UTributeDebriefWidget`) |
 | Sound | MetaSounds, `SC_Overall` / `SC_Music` / `SC_Effects` | One MetaSound per sector tone |
 | UI | `WBP_Title`, `WBP_Controls`, `WBP_Options`, `WBP_HUD`, `WBP_Debrief` | UMG. The HUD is built: `ATributeHUD` shows `UTributeHUDWidget`, which lays itself out in code (Power, Heat, the countdown, the manifest) until a `WBP_HUD` restyles it. The cards and debrief aren't made |
 | Input | `IA_*`, `IMC_Default` | Enhanced Input, keys and pad |
@@ -275,6 +275,16 @@ because Sunday has no time for it.
 - **The editor's widget screenshot misses on-screen debug text.** SlateInspector's `Screenshot` showed no
   Power/Heat readout, but `shot showui` in the Cmd box (saved to `Saved/Screenshots/MacEditor/`) did. Use
   that to check anything drawn on the game's canvas or HUD.
+- **Closing the editor during play crashes it, and then the MCP port is taken.** Killing the editor while a
+  play session ran crashed it in `EndPlayMap`; its `CrashReportClient` kept port 8000, so the next editor
+  logged `HttpListener unable to bind to 127.0.0.1:8000` and had no MCP. Stop play first, and quit any
+  `CrashReportClient` before reopening.
+- **An empty C++ widget never ticks.** The debrief built its layout on its first `NativeTick`, but a widget
+  with no content isn't ticked or drawn, so it never appeared. Build the layout before adding it to the
+  screen (`SetResult` builds it).
+- **The unity build merges test files.** Three test files each had a `Flags` constant in their own
+  namespace with `using namespace`, and the merged file found them ambiguous. Give each file's names their
+  own prefix.
 - **There's no MCP "Instructions" setting in 5.8.** The design doc's step comes from the 5.9 docs.
   Claude Code reads this `CLAUDE.md` from the project folder anyway.
 - **A viewport capture is too big to read inline.** `CaptureViewport` returns the PNG as base64 (about

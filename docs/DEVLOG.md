@@ -117,4 +117,28 @@ Each day becomes one itch.io post with screenshots.
 
 ## Day 3, Saturday Nov 14: the ship
 
+- Started Thursday night, to get ahead. The tribute's rules came first, as plain C++ with tests, because
+  they carry the jam's IP rule: our own eight-note scale spans 11 semitones, so no call can drop an octave;
+  the generator refuses any call with the famous motif's interval shape in any key (a test checks 6000
+  generated calls and the shape in several keys); rounds are 3, 4 and 6 notes, never 5.
+- The mothership is our own design: two dark 200 m slabs crossed into an eight-pointed hull, one ring of
+  8 glowing sectors, each throwing a pool of light on the valley floor. The call lights the sectors one at
+  a time; the answer is to fly into each pool in turn and tap the beam. A pulse outside every pool doesn't
+  count; a wrong pool or a 12-second wait is a miss and the call plays again; three misses and the ship
+  leaves without you.
+- The night has its endings now: docked (the saucer climbs into the hull), left behind, and saucer down,
+  each with a debrief and a score. The valley finally looks like night: one post-process volume fixing the
+  exposure did more than anything else tonight.
+- How it was tested: the agent read each call off the ship through the editor, moved the saucer into the
+  right pools and tapped the beam from the console, and played one night through to docking (13 of 13
+  notes) and another to left behind (three wrong pools).
+- What the agent got wrong:
+  - The gameplay camera looks down, so the ship was never on screen. It added a fixed camera at the
+    valley's edge for the arrival and the ascent.
+  - Its first wide tribute camera climbed above the hull and showed only black.
+  - The debrief never appeared: the widget built itself on its first tick, and an empty widget never ticks.
+  - It closed the editor mid-play, which crashed it; the crash reporter then held the MCP port.
+  - The unity build merged three test files and found their constants ambiguous.
+- Still missing for Saturday: clouds, a real hull mesh, the tones (MetaSounds), and any sound at all.
+
 ## Day 4, Sunday Nov 15: shipping it
