@@ -156,8 +156,8 @@ disqualified, so the gap is a buffer, not spare time.
       happens when the ship arrives is Saturday's*)
 - [ ] **Package a build tonight** (the jam page's tip for day two), uploaded to itch and downloaded back
       end to end (*Nov 12, Mac: the raid packaged as a Shipping build (944 MB app, 601 MB zip) and ran
-      from a clean folder with the map, herds, saucer and HUD. Not yet signed or notarized, not on itch,
-      and no Windows build yet*)
+      from a clean folder with the map, herds, saucer and HUD. Signed with the Developer ID and tested;
+      notarizing waits on the `notary` keychain profile. Not on itch, and no Windows build yet*)
 
 **Saturday, Nov 14: the mothership**
 
