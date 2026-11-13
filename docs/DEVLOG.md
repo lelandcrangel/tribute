@@ -63,6 +63,19 @@ Each day becomes one itch.io post with screenshots.
     the project, and it waited three minutes on a port that was never going to open.
   - This session started before the editor, so its MCP connection failed and wouldn't come back. The
     server was fine, so a small script talks to it over HTTP instead.
+- Cows and people: one character class with a cow and a person kind, and a small controller instead of a
+  behaviour tree. They wander around where they started and pause; a lit beam within 12 m (cows) or 18 m
+  (people) sends them running straight away from it until it has been gone a few seconds; lifted, they
+  go still; dropped, they land and bolt. People wander further and run faster. Tested by measuring: two
+  cows 6 m from the beam were 14 and 23 m away three seconds later; a person dropped from 3.8 m landed
+  and ran 25 m.
+- What the agent got wrong, part two:
+  - Nothing walked at first. The navmesh had been sized while its bounds volume was still the 2 m cube
+    the editor spawns, and scaling the volume up left it at three tiles. A full navigation rebuild fixed it.
+  - The tints didn't show twice: the 5.8 basic shapes use a material with no colour parameter, and then
+    the cows already placed in the map kept their old material. It's set on construction now.
+  - Its first console command went nowhere because the text box it typed into had gone stale when play
+    stopped. It noticed only because the log never showed the command.
 - Still to check by hand: WASD and the stick, and how the lean looks in motion.
 - Noted for the art pass: auto-exposure lifts the moonlit night to daylight, the beam's pool of light is
   blown out, and from the three-quarter camera the hull hides the thing being lifted.

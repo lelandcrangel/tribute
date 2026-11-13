@@ -145,7 +145,9 @@ disqualified, so the gap is a buffer, not spare time.
 - [ ] The saucer pawn: hover, tilt, beam, lift (*Nov 12, built on the Mac and play-tested in the Valley grey
       box: hover, beam, lift, drop and pulse work. Keys, the pad and the lean still need a hand on the
       controls*)
-- [ ] Cows and people: wander, panic, get lifted
+- [ ] Cows and people: wander, panic, get lifted (*Nov 12, built and play-tested in the Valley: 14 cows and
+      6 people wander, run from a lit beam, get taken aboard, and bolt when dropped. Real meshes, sounds
+      and the Heat from beaming people come later*)
 - [ ] Power, transformers, Heat, the police car
 - [ ] Manifest, clock and HUD
 - [ ] **Package a build tonight** (the jam page's tip for day two), uploaded to itch and downloaded back

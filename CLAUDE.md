@@ -69,12 +69,12 @@ diff and review. The Blueprints keep the tuning, meshes and effects editable in 
 | --- | --- | --- |
 | Saucer | `ASaucerPawn` (C++) → `BP_Saucer` | Hovers 9 m up, leans, holds a beam (tap = pulse). Input is built in code until `IA_`/`IMC_` assets exist. `BP_Saucer` not made yet |
 | Liftable things | `ULiftableComponent`, `ALiftableProp` | The component marks what the beam can take and what it counts as (cow, person, named object); the prop is a physics box for grey boxes and the named object |
-| Cows and people | `ATargetCharacter` → `BP_Cow`, `BP_Person` | AIController: wander with `MoveTo`, flee when the beam is near |
+| Cows and people | `ATargetCharacter` (`ACowCharacter`, `APersonCharacter`) → `BP_Cow`, `BP_Person` | `ATargetAIController`: wander about home with pauses, run from a lit beam within the panic radius, go still while lifted, bolt when dropped. Grey-box tinted shapes until the Blueprints exist |
 | Power and Heat | `UPowerHeatComponent` on the saucer | Police at 45% Heat, the helicopter at 80%. Heat falls when you lie low |
 | Responders | `AResponder` → `BP_PoliceCar`, `BP_Helicopter` | Chase on the NavMesh, with a spotlight cone |
 | Manifest and clock | `ATributeGameState`, row in `DT_Manifests` | 3 cows, 2 people, 1 named object; the ship arrives at 7:00 |
 | Run flow | `ATributeGameMode` | Raid → arrival → tribute → dock and ascent, or saucer down, or left behind. For now it only spawns the saucer |
-| Map | `Content/Tribute/Maps/Valley` | Grey box: the engine template, floor scaled to 500 m, six liftable boxes, two barns. Startup and game default map |
+| Map | `Content/Tribute/Maps/Valley` | Grey box: the engine template, floor scaled to 500 m, a NavMesh over all of it, 14 cows, 6 people, six liftable boxes, two barns. Startup and game default map |
 | Mothership | `BP_Mothership` | 8 sectors on dynamic material instances (emissive colour and intensity) |
 | Tribute | `UTributeSequencer` (C++) | Spin, catch, pulse, stop, new colour. Reads `DT_Patterns` with a seed and runs the motif check |
 | Arrival and ascent | `LS_Arrival`, `LS_Ascent` | Level Sequences, started by the GameMode |
@@ -258,6 +258,14 @@ because Sunday has no time for it.
   that's ground to the saucer must be one of those two; props are `PhysicsBody` and cows `Pawn`.
 - **A box let go mid-lift flew upward.** Turning physics back on kept the speed the beam had been moving
   it at. `ULiftableComponent::EndLift` clears the velocity so it drops.
+- **Nobody wandered: the navmesh held three tiles.** A NavMeshBoundsVolume placed through the MCP starts
+  2 m across, and the navmesh sized its tile pool then (`3 tile limit reached!` in the log). Scaling the
+  volume up didn't resize it, so `GetRandomReachablePointInRadius` failed everywhere. Fix: run
+  `RebuildNavigation` after resizing a nav volume, check the log says it recreated the dtNavMesh, and save.
+- **Tinting the basic shapes did nothing.** In 5.8 `/Engine/BasicShapes/Cube` uses `WorldGridMaterial`,
+  which has no parameters. Tint from `/Engine/BasicShapes/BasicShapeMaterial` (its vector parameter is
+  `Color`), and set it in `OnConstruction`: placed instances keep their saved material overrides, so a
+  constructor-only change never reaches them.
 - **There's no MCP "Instructions" setting in 5.8.** The design doc's step comes from the 5.9 docs.
   Claude Code reads this `CLAUDE.md` from the project folder anyway.
 - **A viewport capture is too big to read inline.** `CaptureViewport` returns the PNG as base64 (about
