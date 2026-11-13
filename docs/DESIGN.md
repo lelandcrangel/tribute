@@ -146,8 +146,8 @@ disqualified, so the gap is a buffer, not spare time.
       box: hover, beam, lift, drop and pulse work. Keys, the pad and the lean still need a hand on the
       controls*)
 - [ ] Cows and people: wander, panic, get lifted (*Nov 12, built and play-tested in the Valley: 14 cows and
-      6 people wander, run from a lit beam, get taken aboard, and bolt when dropped. Real meshes, sounds
-      and the Heat from beaming people come later*)
+      6 people wander, run from a lit beam, get taken aboard, and bolt when dropped. Beaming a person adds
+      extra Heat. Real meshes and sounds come later*)
 - [x] Power, transformers, Heat, the police car (*Nov 12, built on the Mac and play-tested: Power, Heat,
       transformers, the blackout, the Heat rim, the saucer going down, and a police car that arrives at
       45, keeps a searchlight on the saucer, can be outrun, and goes home when calm. 9 automation tests*)
