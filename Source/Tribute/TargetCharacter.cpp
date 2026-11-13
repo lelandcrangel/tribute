@@ -26,6 +26,9 @@ ATargetCharacter::ATargetCharacter()
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+	// The basic shapes come with the world-grid material in 5.8; this one has the "Color" the tint sets.
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> TintableMaterial(
+		TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
 
 	GreyBoxBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GreyBoxBody"));
 	GreyBoxBody->SetupAttachment(GetCapsuleComponent());
@@ -43,6 +46,11 @@ ATargetCharacter::ATargetCharacter()
 	if (SphereMesh.Succeeded())
 	{
 		GreyBoxHead->SetStaticMesh(SphereMesh.Object);
+	}
+
+	if (TintableMaterial.Succeeded())
+	{
+		GreyBoxMaterial = TintableMaterial.Object;
 	}
 }
 
@@ -64,14 +72,18 @@ void ATargetCharacter::OnConstruction(const FTransform& Transform)
 	Super::OnConstruction(Transform);
 
 	// The engine's basic shape material takes a "Color", which is all a grey box needs to tell kinds apart.
+	// It's set here rather than only in the constructor so instances already placed in a map pick it up.
+	if (!GreyBoxMaterial)
+	{
+		return;
+	}
 	for (UStaticMeshComponent* Shape : { GreyBoxBody.Get(), GreyBoxHead.Get() })
 	{
 		if (Shape && Shape->GetStaticMesh())
 		{
-			if (UMaterialInstanceDynamic* Tint = Shape->CreateDynamicMaterialInstance(0))
-			{
-				Tint->SetVectorParameterValue(TEXT("Color"), GreyBoxColor);
-			}
+			UMaterialInstanceDynamic* Tint = UMaterialInstanceDynamic::Create(GreyBoxMaterial, Shape);
+			Tint->SetVectorParameterValue(TEXT("Color"), GreyBoxColor);
+			Shape->SetMaterial(0, Tint);
 		}
 	}
 }

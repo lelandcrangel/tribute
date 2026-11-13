@@ -11,6 +11,7 @@
 #include "TargetCharacter.generated.h"
 
 class ULiftableComponent;
+class UMaterialInterface;
 class UStaticMeshComponent;
 
 UCLASS(Abstract)
@@ -34,6 +35,10 @@ public:
 	/** Grey-box head, at the front, so you can see which way it's going. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Target|Grey Box")
 	TObjectPtr<UStaticMeshComponent> GreyBoxHead;
+
+	/** The material the grey-box shapes are tinted from. It needs a "Color" vector parameter. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Target|Grey Box")
+	TObjectPtr<UMaterialInterface> GreyBoxMaterial;
 
 	/** The grey-box shapes' colour. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Target|Grey Box")
