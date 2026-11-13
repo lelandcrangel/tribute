@@ -57,9 +57,11 @@ ASaucerPawn::ASaucerPawn()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(Collision);
 	// A high three-quarter view that doesn't turn with anything: up on screen is always +X in the world.
+	// 50 m back and a little lower than 45 degrees, so a fleeing herd stays in frame and the beam's column
+	// shows from the side instead of being hidden under the hull.
 	CameraBoom->SetUsingAbsoluteRotation(true);
-	CameraBoom->SetRelativeRotation(FRotator(-55.f, 0.f, 0.f));
-	CameraBoom->TargetArmLength = 3000.f;
+	CameraBoom->SetRelativeRotation(FRotator(-48.f, 0.f, 0.f));
+	CameraBoom->TargetArmLength = 5000.f;
 	CameraBoom->bDoCollisionTest = false;
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 5.f;
