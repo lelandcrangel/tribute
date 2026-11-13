@@ -1,6 +1,7 @@
 #include "TributeHUD.h"
 
 #include "Blueprint/WidgetTree.h"
+#include "Components/Border.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/HorizontalBox.h"
@@ -255,6 +256,7 @@ UTextBlock* UTributeDebriefWidget::AddLine(UVerticalBox* Box, const FString& Tex
 void UTributeDebriefWidget::SetResult(const FRunResult& InResult)
 {
 	Result = InResult;
+	BuildLayout();
 }
 
 void UTributeDebriefWidget::NativeOnInitialized()
@@ -267,19 +269,27 @@ void UTributeDebriefWidget::NativeTick(const FGeometry& MyGeometry, float InDelt
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	ReadyIn -= InDeltaTime;
+}
 
-	// Built on the first tick, once the result is set.
+void UTributeDebriefWidget::BuildLayout()
+{
+	// Built once the result is known, before it goes on screen (an empty widget never ticks or draws).
 	if (!WidgetTree || WidgetTree->RootWidget)
 	{
 		return;
 	}
 	UCanvasPanel* Root = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("Root"));
 	WidgetTree->RootWidget = Root;
+	// A dark panel behind the text, so it reads over the lit ring.
+	UBorder* Panel = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+	Panel->SetBrushColor(FLinearColor(0.f, 0.f, 0.02f, 0.72f));
+	Panel->SetPadding(FMargin(60.f, 36.f));
+	UCanvasPanelSlot* PanelSlot = Root->AddChildToCanvas(Panel);
+	PanelSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+	PanelSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+	PanelSlot->SetAutoSize(true);
 	UVerticalBox* Box = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
-	UCanvasPanelSlot* BoxSlot = Root->AddChildToCanvas(Box);
-	BoxSlot->SetAnchors(FAnchors(0.5f, 0.5f));
-	BoxSlot->SetAlignment(FVector2D(0.5f, 0.5f));
-	BoxSlot->SetAutoSize(true);
+	Panel->SetContent(Box);
 
 	const FLinearColor White(1.f, 1.f, 1.f);
 	const FLinearColor Grey(0.7f, 0.7f, 0.75f);

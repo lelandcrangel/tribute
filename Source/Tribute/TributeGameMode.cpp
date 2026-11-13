@@ -1,5 +1,7 @@
 #include "TributeGameMode.h"
 
+#include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
 #include "Components/LightComponent.h"
 #include "Engine/DirectionalLight.h"
 #include "EngineUtils.h"
@@ -114,6 +116,53 @@ void ATributeGameMode::HandleShipArrived()
 	{
 		Mothership->OnTributeEnded.AddUniqueDynamic(this, &ATributeGameMode::HandleTributeEnded);
 		Mothership->BeginArrival(Saucer.Get());
+
+		// Watch it come down from far out and low, then hand the view back for the tribute.
+		ShowShipView(true, 2.f);
+		FTimerHandle Back;
+		GetWorldTimerManager().SetTimer(Back, FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			// Back to the saucer, pulled up wide so all eight pools are in view.
+			if (Saucer.IsValid())
+			{
+				Saucer->SetWideView(true);
+			}
+			ShowShipView(false, 2.5f);
+		}),
+			Mothership->ArrivalTime + 1.5f, false);
+	}
+}
+
+void ATributeGameMode::ShowShipView(bool bOnShip, float BlendSeconds)
+{
+	APlayerController* Player = GetWorld()->GetFirstPlayerController();
+	if (!Player || !Mothership.IsValid())
+	{
+		return;
+	}
+	if (!bOnShip)
+	{
+		if (Saucer.IsValid())
+		{
+			Player->SetViewTargetWithBlend(Saucer.Get(), BlendSeconds, VTBlend_Cubic);
+		}
+		return;
+	}
+	if (!ShipCamera.IsValid())
+	{
+		const FVector ShipSpot(Mothership->GetActorLocation().X, Mothership->GetActorLocation().Y, Mothership->ValleyFloorZ);
+		const FVector CameraAt = ShipSpot + ArrivalCameraOffset;
+		const FVector LookAt = ShipSpot + FVector(0.f, 0.f, Mothership->HoverHeight * 0.7f);
+		ShipCamera = GetWorld()->SpawnActor<ACameraActor>(CameraAt, (LookAt - CameraAt).Rotation());
+		if (ShipCamera.IsValid())
+		{
+			ShipCamera->GetCameraComponent()->SetFieldOfView(70.f);
+			ShipCamera->GetCameraComponent()->bConstrainAspectRatio = false;
+		}
+	}
+	if (ShipCamera.IsValid())
+	{
+		Player->SetViewTargetWithBlend(ShipCamera.Get(), BlendSeconds, VTBlend_Cubic);
 	}
 }
 
@@ -125,14 +174,16 @@ void ATributeGameMode::HandleTributeEnded(bool bPassed)
 	}
 	if (bPassed && Saucer.IsValid() && Mothership.IsValid())
 	{
-		// The debrief waits for the saucer to be aboard.
+		// The debrief waits for the saucer to be aboard. Watch it rise from far out, the valley falling away.
 		Saucer->BeginDocking(Mothership->GetDockPoint());
+		ShowShipView(true, 2.f);
 		return;
 	}
 	if (Mothership.IsValid())
 	{
 		Mothership->Depart();
 	}
+	ShowShipView(true, 2.f);
 	EndRun(ERunEnding::LeftBehind);
 }
 

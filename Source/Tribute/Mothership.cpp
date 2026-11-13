@@ -11,10 +11,10 @@
 namespace
 {
 	/** Pool brightness, in candelas: dim marks where each sector's pool is; lit is the call or an answer. */
-	constexpr float DimPool = 6000.f;
-	constexpr float LitPool = 500000.f;
+	constexpr float DimPool = 40000.f;
+	constexpr float LitPool = 180000.f;
 	/** How bright the valley glow gets once the ship is down. */
-	constexpr float UnderGlow = 40000.f;
+	constexpr float UnderGlow = 14000.f;
 	/** How long an answer's flash lasts. */
 	constexpr float FlashSeconds = 0.5f;
 
@@ -99,8 +99,8 @@ void AMothership::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Placed on the valley floor at its centre; it waits high above the clouds until the clock runs out.
-	const FVector Ground = GetActorLocation();
+	// Placed above the valley's centre; it waits high above the clouds until the clock runs out.
+	const FVector Ground(GetActorLocation().X, GetActorLocation().Y, ValleyFloorZ);
 	DownLocation = Ground + FVector(0.f, 0.f, HoverHeight);
 	UpLocation = Ground + FVector(0.f, 0.f, StartHeight);
 	SetActorLocation(UpLocation);

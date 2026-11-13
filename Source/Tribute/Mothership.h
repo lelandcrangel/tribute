@@ -65,6 +65,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mothership")
 	float PoolRadius = 1300.f;
 
+	/** The height of the valley floor under it. Place the ship anywhere above the valley's centre; it starts at
+	 *  StartHeight above this and comes down to HoverHeight above it. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mothership")
+	float ValleyFloorZ = 0.f;
+
 	/** How high above the valley floor it hangs once it's down, in cm. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mothership")
 	float HoverHeight = 12000.f;

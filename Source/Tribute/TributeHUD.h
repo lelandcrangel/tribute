@@ -105,6 +105,7 @@ protected:
 
 private:
 	UTextBlock* AddLine(class UVerticalBox* Box, const FString& Text, int32 Size, const FLinearColor& Colour, float Gap);
+	void BuildLayout();
 
 	FRunResult Result;
 	/** Seconds before a key starts a new night, so a held beam doesn't skip the debrief. */

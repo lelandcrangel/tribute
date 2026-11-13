@@ -126,6 +126,9 @@ void ASaucerPawn::BeginPlay()
 	{
 		Transformers.Add(*It);
 	}
+	RaidArmLength = CameraBoom->TargetArmLength;
+	RaidPitch = CameraBoom->GetRelativeRotation().Pitch;
+	RaidFieldOfView = Camera->FieldOfView;
 	PowerHeat->OnPowerEmpty.AddDynamic(this, &ASaucerPawn::HandlePowerEmpty);
 	UpdateRim();
 }
@@ -282,6 +285,13 @@ void ASaucerPawn::Tick(float DeltaSeconds)
 
 	UpdateLift(DeltaSeconds);
 	UpdateHull(DeltaSeconds);
+
+	// Ease between the raid camera and the tribute's wide view.
+	const float WantArm = bWideView ? WideArmLength : RaidArmLength;
+	const float WantPitch = bWideView ? WidePitch : RaidPitch;
+	CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, WantArm, DeltaSeconds, 1.5f);
+	CameraBoom->SetRelativeRotation(FRotator(FMath::FInterpTo(CameraBoom->GetRelativeRotation().Pitch, WantPitch, DeltaSeconds, 1.5f), 0.f, 0.f));
+	Camera->SetFieldOfView(FMath::FInterpTo(Camera->FieldOfView, bWideView ? WideFieldOfView : RaidFieldOfView, DeltaSeconds, 1.5f));
 	UpdateBeamLight(DeltaSeconds);
 	UpdatePowerHeat(DeltaSeconds);
 	UpdateRim();

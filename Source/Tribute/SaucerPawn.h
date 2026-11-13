@@ -223,6 +223,21 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Saucer", meta = (DisplayName = "Power Failed"))
 	void PowerFailed();
 
+	/** Pulls the camera up and back so the whole ring of pools is in view (for the tribute), or returns it. */
+	UFUNCTION(BlueprintCallable, Category = "Saucer")
+	void SetWideView(bool bWide) { bWideView = bWide; }
+
+	/** The tribute's camera: high and wide enough to see the ring of pools, but under the hull (it hangs at
+	 *  120 m; the camera tops out near 100 m). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Camera")
+	float WideArmLength = 9500.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Camera")
+	float WidePitch = -70.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Camera")
+	float WideFieldOfView = 85.f;
+
 	/** The tribute was answered: rise into the mothership's hull at DockPoint. The player has no control from here. */
 	UFUNCTION(BlueprintCallable, Category = "Saucer")
 	void BeginDocking(FVector DockPoint);
@@ -286,6 +301,10 @@ private:
 
 	bool bDown = false;
 	bool bDocking = false;
+	bool bWideView = false;
+	float RaidArmLength = 0.f;
+	float RaidPitch = 0.f;
+	float RaidFieldOfView = 60.f;
 	bool bDocked = false;
 	FVector DockTarget = FVector::ZeroVector;
 };
