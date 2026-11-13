@@ -5,22 +5,35 @@
 #include "Responder.h"
 #include "SaucerPawn.h"
 #include "Tribute.h"
+#include "TributeGameState.h"
+#include "TributeHUD.h"
 
 ATributeGameMode::ATributeGameMode()
 {
 	// BP_Saucer and BP_PoliceCar replace these once they exist, through a GameMode Blueprint.
 	DefaultPawnClass = ASaucerPawn::StaticClass();
 	PoliceCarClass = APoliceCar::StaticClass();
+	GameStateClass = ATributeGameState::StaticClass();
+	HUDClass = ATributeHUD::StaticClass();
 }
 
 void ATributeGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 
-	// The saucer exists now: listen to its Heat to send responders in and call them off.
+	// The saucer exists now: count what it takes, and listen to its Heat to send responders in and call them off.
 	if (ASaucerPawn* Saucer = NewPlayer ? Cast<ASaucerPawn>(NewPlayer->GetPawn()) : nullptr)
 	{
 		Saucer->PowerHeat->OnHeatLevelChanged.AddDynamic(this, &ATributeGameMode::HandleHeatLevelChanged);
+		Saucer->OnTargetLifted.AddDynamic(this, &ATributeGameMode::HandleTargetLifted);
+	}
+}
+
+void ATributeGameMode::HandleTargetLifted(AActor* Target, ETargetKind Kind)
+{
+	if (ATributeGameState* State = GetGameState<ATributeGameState>())
+	{
+		State->CountTakenAboard(Kind);
 	}
 }
 

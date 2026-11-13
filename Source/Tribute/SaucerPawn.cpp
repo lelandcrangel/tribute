@@ -511,7 +511,7 @@ void ASaucerPawn::UpdatePowerHeat(float DeltaSeconds)
 	}
 
 #if !UE_BUILD_SHIPPING
-	// A stand-in for the HUD: Power, Heat and who's coming, top left.
+	// A tuning readout: Power, Heat and who's coming, top left. Off by default now the HUD shows the meters.
 	if (bShowDebugReadout && GEngine && IsPlayerControlled())
 	{
 		static const TCHAR* LevelNames[] = { TEXT("calm"), TEXT("police"), TEXT("helicopter") };

@@ -1,11 +1,12 @@
 // Runs one night: the raid, the arrival, the tribute, and the dock and ascent (or saucer down, or left
-// behind). So far it puts the player in the saucer and sends the police in and home as Heat rises and falls;
-// the rest of the run flow comes with the manifest and clock.
+// behind). So far it puts the player in the saucer, counts what it takes against the manifest, and sends
+// the police in and home as Heat rises and falls. The arrival and the endings come next.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "LiftableComponent.h"
 #include "PowerHeatComponent.h"
 #include "TributeGameMode.generated.h"
 
@@ -33,6 +34,10 @@ protected:
 private:
 	UFUNCTION()
 	void HandleHeatLevelChanged(EHeatLevel NewLevel);
+
+	/** Counts whatever the saucer takes aboard against the manifest. */
+	UFUNCTION()
+	void HandleTargetLifted(AActor* Target, ETargetKind Kind);
 
 	/** Where to spawn the police: the tagged start, or failing that, far down the valley from the saucer. */
 	FTransform FindPoliceStart() const;

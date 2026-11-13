@@ -21,6 +21,9 @@ public class Tribute : ModuleRules
 			"AIModule",
 			"GameplayTasks",
 			"NavigationSystem",
+			"UMG",
+			"Slate",
+			"SlateCore",
 		});
 	}
 }

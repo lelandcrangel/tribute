@@ -87,9 +87,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Heat")
 	FLinearColor HotRimColour = FLinearColor(1.f, 0.08f, 0.03f);
 
-	/** Shows Power and Heat as text on screen until the HUD exists. Never in a Shipping build. */
+	/** Shows Power, Heat and the spotlight as text on screen, for tuning. Never in a Shipping build. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Saucer|Heat")
-	bool bShowDebugReadout = true;
+	bool bShowDebugReadout = false;
 
 	// --- Hover and tilt ---
 
