@@ -15,6 +15,9 @@ public class Tribute : ModuleRules
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
+			"AIModule",
+			"GameplayTasks",
+			"NavigationSystem",
 		});
 	}
 }
