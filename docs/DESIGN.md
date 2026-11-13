@@ -151,7 +151,9 @@ disqualified, so the gap is a buffer, not spare time.
 - [x] Power, transformers, Heat, the police car (*Nov 12, built on the Mac and play-tested: Power, Heat,
       transformers, the blackout, the Heat rim, the saucer going down, and a police car that arrives at
       45, keeps a searchlight on the saucer, can be outrun, and goes home when calm. 9 automation tests*)
-- [ ] Manifest, clock and HUD
+- [x] Manifest, clock and HUD (*Nov 12: the manifest counts lifts against DT_Manifests, the clock counts
+      down to 7:00, and the HUD shows Power, Heat, the countdown and the manifest. 13 tests pass. What
+      happens when the ship arrives is Saturday's*)
 - [ ] **Package a build tonight** (the jam page's tip for day two), uploaded to itch and downloaded back
       end to end
 

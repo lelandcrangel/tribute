@@ -73,14 +73,14 @@ diff and review. The Blueprints keep the tuning, meshes and effects editable in 
 | Power and Heat | `UPowerHeatComponent` on the saucer | Police at 45% Heat, the helicopter at 80% (called off 5 below). Heat falls after 4 s lying low. The saucer steps it every frame; tests in `Source/Tribute/Tests/PowerHeatTests.cpp`. The rim goes blue to red, with a ground glow |
 | Transformers | `ATransformer` | Refill within 6 m; the first draw blacks the farm out (its yard light and any `FarmLights`); 120 Power each. One at each of the Valley's three farms |
 | Responders | `AResponder` (`APoliceCar`) → `BP_PoliceCar`, `BP_Helicopter` | `AResponderAIController` drives toward the ground under the saucer at 9 m/s (the saucer is faster). The searchlight holds the saucer within 40 m unless a barn is in the way; lit, Heat climbs and can't fall. `ATributeGameMode` sends one from the actor tagged `PoliceStart` at the police level and calls it home when calm. Helicopter not built |
-| Manifest and clock | `ATributeGameState`, row in `DT_Manifests` | 3 cows, 2 people, 1 named object; the ship arrives at 7:00 |
+| Manifest and clock | `ATributeGameState` with `FManifest` and `FRaidClock` (`Manifest.h`), row `Default` in `Content/Tribute/Data/DT_Manifests` | 3 cows, 2 people, the scarecrow; the ship arrives at 7:00. The GameMode counts each lift; `OnShipArrived` fires when the clock runs out. Tests in `Tests/ManifestTests.cpp`. `/Game/Tribute/Data` is always cooked |
 | Run flow | `ATributeGameMode` | Raid → arrival → tribute → dock and ascent, or saucer down, or left behind. For now it spawns the saucer and sends the police in and home by Heat level |
 | Map | `Content/Tribute/Maps/Valley` | Grey box: the engine template, floor scaled to 500 m, a NavMesh over all of it, 14 cows, 6 people, six liftable boxes, two barns, three transformers, a `PoliceStart` point. Startup and game default map |
 | Mothership | `BP_Mothership` | 8 sectors on dynamic material instances (emissive colour and intensity) |
 | Tribute | `UTributeSequencer` (C++) | Spin, catch, pulse, stop, new colour. Reads `DT_Patterns` with a seed and runs the motif check |
 | Arrival and ascent | `LS_Arrival`, `LS_Ascent` | Level Sequences, started by the GameMode |
 | Sound | MetaSounds, `SC_Overall` / `SC_Music` / `SC_Effects` | One MetaSound per sector tone |
-| UI | `WBP_Title`, `WBP_Controls`, `WBP_Options`, `WBP_HUD`, `WBP_Debrief` | UMG |
+| UI | `WBP_Title`, `WBP_Controls`, `WBP_Options`, `WBP_HUD`, `WBP_Debrief` | UMG. The HUD is built: `ATributeHUD` shows `UTributeHUDWidget`, which lays itself out in code (Power, Heat, the countdown, the manifest) until a `WBP_HUD` restyles it. The cards and debrief aren't made |
 | Input | `IA_*`, `IMC_Default` | Enhanced Input, keys and pad |
 
 Content lives under `Content/Tribute/` (`Maps`, `Saucer`, `Targets`, `Mothership`, `UI`, `Audio`,

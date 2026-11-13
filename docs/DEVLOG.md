@@ -98,6 +98,13 @@ Each day becomes one itch.io post with screenshots.
   saucer when it fled 150 m, called off at calm, gone once home.
 - The agent tried to test the police by setting Heat directly; Heat is read-only from outside on purpose,
   so it raised it the way a player would, by beaming over a transformer.
+- Manifest, clock and HUD: the ship's order is a row in a data table (3 cows, 2 people, the scarecrow, 7
+  minutes); the counting and the countdown are plain structs with their own tests, so 13 tests now guard
+  the rules. The HUD stays small and in the corners: Power and Heat, "SHIP IN 5:41", and the manifest,
+  where a line blinks on each lift and turns green when it's filled. Play-tested by lifting cows, a person
+  and a box and reading the manifest back from the log and the screen.
+- The HUD is laid out in C++ rather than a widget asset for now, so it was testable tonight; a WBP_HUD
+  can restyle it later.
 - Still to check by hand: WASD and the stick, and how the lean looks in motion.
 - Noted for the art pass: auto-exposure lifts the moonlit night to daylight, the beam's pool of light is
   blown out, and from the three-quarter camera the hull hides the thing being lifted.
