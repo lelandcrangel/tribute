@@ -76,6 +76,20 @@ Each day becomes one itch.io post with screenshots.
     the cows already placed in the map kept their old material. It's set on construction now.
   - Its first console command went nowhere because the text box it typed into had gone stale when play
     stopped. It noticed only because the log never showed the command.
+- The camera moved back to 50 m and down to 48 degrees after the first play test, so a fleeing herd
+  stays in frame.
+- Power and Heat: the rules sit in one component that the saucer steps each frame, so they can be tested
+  without a world: eight automation tests cover the drain and refill rates, the police at 45 and the
+  helicopter at 80, lying low, and the saucer going down. Three farm transformers refill the saucer and
+  black their farms out. The saucer's rim runs from blue to red with Heat and throws that colour on the
+  ground. Play-tested by reading the numbers back: eight seconds of beam took Power to 78 and Heat to
+  21; beaming over a transformer brought the police; running Power out sank the saucer to the ground.
+- What the agent got wrong, part three:
+  - It charged Heat for hanging over a transformer even with a full tank. Play showed Heat climbing
+    while nothing was being drawn; the rule now charges for what's actually drawn, and a test says so.
+  - Its first rim glow was ten times too bright and turned the valley purple.
+  - It decided the Power readout wasn't drawing, because the editor's screenshot tool doesn't capture
+    on-screen text. An in-game `shot showui` showed it was there all along.
 - Still to check by hand: WASD and the stick, and how the lean looks in motion.
 - Noted for the art pass: auto-exposure lifts the moonlit night to daylight, the beam's pool of light is
   blown out, and from the three-quarter camera the hull hides the thing being lifted.

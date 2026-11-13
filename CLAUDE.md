@@ -70,7 +70,8 @@ diff and review. The Blueprints keep the tuning, meshes and effects editable in 
 | Saucer | `ASaucerPawn` (C++) → `BP_Saucer` | Hovers 9 m up, leans, holds a beam (tap = pulse). Input is built in code until `IA_`/`IMC_` assets exist. `BP_Saucer` not made yet |
 | Liftable things | `ULiftableComponent`, `ALiftableProp` | The component marks what the beam can take and what it counts as (cow, person, named object); the prop is a physics box for grey boxes and the named object |
 | Cows and people | `ATargetCharacter` (`ACowCharacter`, `APersonCharacter`) → `BP_Cow`, `BP_Person` | `ATargetAIController`: wander about home with pauses, run from a lit beam within the panic radius, go still while lifted, bolt when dropped. Grey-box tinted shapes until the Blueprints exist |
-| Power and Heat | `UPowerHeatComponent` on the saucer | Police at 45% Heat, the helicopter at 80%. Heat falls when you lie low |
+| Power and Heat | `UPowerHeatComponent` on the saucer | Police at 45% Heat, the helicopter at 80% (called off 5 below). Heat falls after 4 s lying low. The saucer steps it every frame; tests in `Source/Tribute/Tests/PowerHeatTests.cpp`. The rim goes blue to red, with a ground glow |
+| Transformers | `ATransformer` | Refill within 6 m; the first draw blacks the farm out (its yard light and any `FarmLights`); 120 Power each. One at each of the Valley's three farms |
 | Responders | `AResponder` → `BP_PoliceCar`, `BP_Helicopter` | Chase on the NavMesh, with a spotlight cone |
 | Manifest and clock | `ATributeGameState`, row in `DT_Manifests` | 3 cows, 2 people, 1 named object; the ship arrives at 7:00 |
 | Run flow | `ATributeGameMode` | Raid → arrival → tribute → dock and ascent, or saucer down, or left behind. For now it only spawns the saucer |
@@ -266,6 +267,9 @@ because Sunday has no time for it.
   which has no parameters. Tint from `/Engine/BasicShapes/BasicShapeMaterial` (its vector parameter is
   `Color`), and set it in `OnConstruction`: placed instances keep their saved material overrides, so a
   constructor-only change never reaches them.
+- **The editor's widget screenshot misses on-screen debug text.** SlateInspector's `Screenshot` showed no
+  Power/Heat readout, but `shot showui` in the Cmd box (saved to `Saved/Screenshots/MacEditor/`) did. Use
+  that to check anything drawn on the game's canvas or HUD.
 - **There's no MCP "Instructions" setting in 5.8.** The design doc's step comes from the 5.9 docs.
   Claude Code reads this `CLAUDE.md` from the project folder anyway.
 - **A viewport capture is too big to read inline.** `CaptureViewport` returns the PNG as base64 (about
